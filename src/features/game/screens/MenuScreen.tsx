@@ -9,13 +9,15 @@ interface MenuScreenProps {
 
 export function MenuScreen({ onStartQuiz, onStartStudy, lastScore }: MenuScreenProps) {
   return (
-    <div className='flex-1 flex flex-col items-center justify-center gap-6 py-8 px-4'>
+    <div className='flex-1 flex flex-col items-center justify-center gap-6 py-8'>
       <div className='text-center'>
         <h1 className='text-3xl md:text-4xl font-extrabold text-emerald-800 mb-2 tracking-tight'>
           Bangladesh District Quiz
         </h1>
-        <p className='text-gray-500 text-sm md:text-base max-w-md mx-auto leading-relaxed px-4'>
-          Can you locate all 64 districts on the map? Test your knowledge or study to learn!
+        <p className='text-gray-500 text-sm md:text-base max-w-md mx-auto leading-relaxed'>
+          Can you locate all 64 districts on the map?
+          <br />
+          Test your knowledge or study to learn!
         </p>
       </div>
 
@@ -35,13 +37,13 @@ export function MenuScreen({ onStartQuiz, onStartStudy, lastScore }: MenuScreenP
       <div className='flex flex-col sm:flex-row gap-3 w-full max-w-sm px-2'>
         <button
           onClick={onStartQuiz}
-          className='flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all text-lg cursor-pointer active:scale-[0.97] hover:-translate-y-0.5'
+          className='flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all text-md cursor-pointer active:scale-[0.97] hover:-translate-y-0.5'
         >
           🎯 Start Quiz
         </button>
         <button
           onClick={onStartStudy}
-          className='flex-1 bg-white hover:bg-sky-50 text-sky-700 font-semibold py-2 px-6 rounded-xl shadow-md hover:shadow-lg transition-all text-lg cursor-pointer active:scale-[0.97] border-2 border-sky-200 hover:-translate-y-0.5'
+          className='flex-1 bg-white hover:bg-sky-50 text-sky-700 font-semibold py-2 px-6 rounded-xl shadow-md hover:shadow-lg transition-all text-md cursor-pointer active:scale-[0.97] border-2 border-sky-200 hover:-translate-y-0.5'
         >
           📖 Study Map
         </button>
