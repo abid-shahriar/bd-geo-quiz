@@ -695,7 +695,11 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
 
       {/* Zoom level indicator */}
       {zoom > 1 && (
-        <div className='absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-md backdrop-blur-sm'>
+        <div
+          className={`absolute right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-md backdrop-blur-sm ${
+            showLabels ? 'top-12' : 'top-3'
+          }`}
+        >
           {Math.round(zoom * 100)}%
         </div>
       )}

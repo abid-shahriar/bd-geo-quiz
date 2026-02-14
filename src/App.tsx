@@ -202,6 +202,13 @@ function StudyScreen() {
   const [mapResetToken, setMapResetToken] = useState(0);
   const [showMobileDivisions, setShowMobileDivisions] = useState(false);
 
+  const clearDivisionSelection = () => {
+    if (!showDivisionFilter) return;
+    setShowDivisionFilter(null);
+    setMapResetToken((token) => token + 1);
+    setShowMobileDivisions(false);
+  };
+
   const handleDivisionSelect = (division: string) => {
     setShowDivisionFilter((prev) => {
       const next = prev === division ? null : division;
@@ -224,11 +231,19 @@ function StudyScreen() {
               onClick={() => setShowMobileDivisions((prev) => !prev)}
               className='bg-white/95 backdrop-blur-sm border border-gray-200 text-gray-700 font-semibold text-xs px-3 py-2 rounded-xl shadow-md flex items-center gap-1.5'
             >
-              🧭 Divisions {showMobileDivisions ? '▲' : '▼'}
+              🧭 {showDivisionFilter ?? 'Divisions'} {showMobileDivisions ? '▲' : '▼'}
             </button>
 
             {showMobileDivisions && (
               <div className='mt-2 w-[min(82vw,18rem)] max-h-[45vh] overflow-y-auto bg-white/95 backdrop-blur-sm rounded-xl border border-gray-200 shadow-lg p-2.5'>
+                {showDivisionFilter && (
+                  <button
+                    onClick={clearDivisionSelection}
+                    className='w-full mb-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold px-3 py-2 rounded-lg border border-red-200 transition-colors cursor-pointer'
+                  >
+                    Clear selection
+                  </button>
+                )}
                 <div className='grid grid-cols-2 gap-2'>
                   {Object.entries(DIVISION_COLORS).map(([division, color]) => (
                     <button
@@ -282,6 +297,14 @@ function StudyScreen() {
             <h3 className='font-semibold text-gray-600 text-xs uppercase tracking-wide mb-3'>
               Divisions
             </h3>
+            {showDivisionFilter && (
+              <button
+                onClick={clearDivisionSelection}
+                className='w-full mb-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold px-3 py-2 rounded-lg border border-red-200 transition-colors cursor-pointer'
+              >
+                Clear selection
+              </button>
+            )}
             <div className='grid grid-cols-1 gap-2'>
               {Object.entries(DIVISION_COLORS).map(([division, color]) => (
                 <button
