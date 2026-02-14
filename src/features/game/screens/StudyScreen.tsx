@@ -1,11 +1,12 @@
+// ** React Imports
 import { useState } from 'react';
-import { BangladeshMap } from '../../../BangladeshMap';
-import { DIVISION_COLORS } from '../../../data/districts';
+
+// ** Local Imports
+import { DIVISION_COLORS } from 'src/data/districts';
+import { BangladeshMap } from 'src/components/bangladesh-map/BangladeshMap';
 
 export function StudyScreen() {
-  const [showDivisionFilter, setShowDivisionFilter] = useState<string | null>(
-    null
-  );
+  const [showDivisionFilter, setShowDivisionFilter] = useState<string | null>(null);
   const [mapResetToken, setMapResetToken] = useState(0);
   const [showMobileDivisions, setShowMobileDivisions] = useState(false);
 
@@ -36,8 +37,7 @@ export function StudyScreen() {
               onClick={() => setShowMobileDivisions((prev) => !prev)}
               className='bg-white/95 backdrop-blur-sm border border-gray-200 text-gray-700 font-semibold text-xs px-3 py-2 rounded-xl shadow-md flex items-center gap-1.5'
             >
-              🧭 {showDivisionFilter ?? 'Divisions'}{' '}
-              {showMobileDivisions ? '▲' : '▼'}
+              🧭 {showDivisionFilter ?? 'Divisions'} {showMobileDivisions ? '▲' : '▼'}
             </button>
 
             {showMobileDivisions && (
@@ -98,9 +98,7 @@ export function StudyScreen() {
 
         <div className='hidden lg:block lg:w-52 flex-shrink-0 order-2'>
           <div className='bg-white rounded-2xl shadow-sm p-4 border border-gray-100'>
-            <h3 className='font-semibold text-gray-600 text-xs uppercase tracking-wide mb-3'>
-              Divisions
-            </h3>
+            <h3 className='font-semibold text-gray-600 text-xs uppercase tracking-wide mb-3'>Divisions</h3>
             {showDivisionFilter && (
               <button
                 onClick={clearDivisionSelection}

@@ -1,4 +1,5 @@
-import { DIVISION_COLORS } from '../../../data/districts';
+// ** Local Imports
+import { DIVISION_COLORS } from 'src/data/districts';
 
 interface MenuScreenProps {
   onStartQuiz: () => void;
@@ -6,11 +7,7 @@ interface MenuScreenProps {
   lastScore: { score: number; totalQuestions: number } | null;
 }
 
-export function MenuScreen({
-  onStartQuiz,
-  onStartStudy,
-  lastScore
-}: MenuScreenProps) {
+export function MenuScreen({ onStartQuiz, onStartStudy, lastScore }: MenuScreenProps) {
   return (
     <div className='flex-1 flex flex-col items-center justify-center gap-6 py-8 px-4'>
       <div className='text-center'>
@@ -18,25 +15,19 @@ export function MenuScreen({
           Bangladesh District Quiz
         </h1>
         <p className='text-gray-500 text-sm md:text-base max-w-md mx-auto leading-relaxed px-4'>
-          Can you locate all 64 districts on the map? Test your knowledge or
-          study to learn!
+          Can you locate all 64 districts on the map? Test your knowledge or study to learn!
         </p>
       </div>
 
       {lastScore && lastScore.totalQuestions > 0 && (
         <div className='bg-white rounded-2xl shadow-md p-6 text-center border border-emerald-100 min-w-[180px]'>
-          <p className='text-gray-400 text-xs font-medium uppercase tracking-wide mb-1'>
-            Last Score
-          </p>
+          <p className='text-gray-400 text-xs font-medium uppercase tracking-wide mb-1'>Last Score</p>
           <p className='text-3xl font-extrabold text-emerald-700'>
             {lastScore.score}
-            <span className='text-lg text-gray-400'>
-              /{lastScore.totalQuestions}
-            </span>
+            <span className='text-lg text-gray-400'>/{lastScore.totalQuestions}</span>
           </p>
           <p className='text-emerald-600 text-sm font-medium mt-1'>
-            {Math.round((lastScore.score / lastScore.totalQuestions) * 100)}%
-            correct
+            {Math.round((lastScore.score / lastScore.totalQuestions) * 100)}% correct
           </p>
         </div>
       )}
@@ -62,10 +53,7 @@ export function MenuScreen({
         </h3>
         <div className='grid grid-cols-2 gap-x-4 gap-y-2'>
           {Object.entries(DIVISION_COLORS).map(([division, color]) => (
-            <div
-              key={division}
-              className='flex items-center gap-2.5 text-sm text-gray-600'
-            >
+            <div key={division} className='flex items-center gap-2.5 text-sm text-gray-600'>
               <div
                 className='w-3.5 h-3.5 rounded-full flex-shrink-0 ring-1 ring-black/10'
                 style={{ backgroundColor: color }}

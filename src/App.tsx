@@ -1,19 +1,19 @@
+// ** React Imports
 import { useState } from 'react';
-import { MenuScreen, StudyScreen, QuizScreen } from './features/game/screens';
-import { useGameState } from './useGameState';
-import './index.css';
+
+// ** Hooks Imports
+import { useGameState } from 'src/hooks/useGameState';
+
+// ** Local Imports
+import { MenuScreen } from 'src/features/game/screens/MenuScreen';
+import { QuizScreen } from 'src/features/game/screens/QuizScreen';
+import { StudyScreen } from 'src/features/game/screens/StudyScreen';
+
+import 'src/index.css';
 
 function App() {
-  const {
-    state,
-    startQuiz,
-    startStudy,
-    goToMenu,
-    handleDistrictClick,
-    nextQuestion,
-    isGameOver,
-    progress
-  } = useGameState();
+  const { state, startQuiz, startStudy, goToMenu, handleDistrictClick, nextQuestion, isGameOver, progress } =
+    useGameState();
 
   const [showEndConfirm, setShowEndConfirm] = useState(false);
 
@@ -57,9 +57,7 @@ function App() {
             </button>
 
             {state.mode === 'study' && (
-              <span className='bg-sky-100 text-sky-700 px-3 py-1 rounded-full text-sm font-medium'>
-                📖 Study Mode
-              </span>
+              <span className='bg-sky-100 text-sky-700 px-3 py-1 rounded-full text-sm font-medium'>📖 Study Mode</span>
             )}
 
             {(state.mode === 'quiz' || state.mode === 'result') && (
@@ -83,9 +81,7 @@ function App() {
                     style={{ width: `${progress.percentage}%` }}
                   />
                 </div>
-                <span className='text-xs text-gray-500 font-medium flex-shrink-0'>
-                  {progress.current}/64
-                </span>
+                <span className='text-xs text-gray-500 font-medium flex-shrink-0'>{progress.current}/64</span>
               </div>
             </div>
           )}

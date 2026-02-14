@@ -1,5 +1,8 @@
+// ** React Imports
 import { useState, useCallback, useMemo } from 'react';
-import { districts } from './data/districts';
+
+// ** Local Imports
+import { districts } from 'src/data/districts';
 
 export type GameMode = 'menu' | 'study' | 'quiz' | 'result';
 

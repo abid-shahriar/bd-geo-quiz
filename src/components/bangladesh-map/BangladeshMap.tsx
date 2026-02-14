@@ -1,21 +1,15 @@
+// ** React Imports
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import {
-  districts,
-  MAP_WIDTH,
-  MAP_HEIGHT,
-  type District
-} from './data/districts';
 
-interface BangladeshMapProps {
-  onDistrictClick?: (districtName: string) => void;
-  showLabels?: boolean;
-  hideTooltip?: boolean;
-  highlightDivision?: string | null;
-  correctDistrict?: string | null;
-  wrongDistrict?: string | null;
-  answeredDistricts?: string[];
-  interactive?: boolean;
-}
+// ** Types Imports
+import { District } from 'src/data/districts';
+import { MapTooltip } from 'src/components/bangladesh-map/BangladeshMap.types';
+import { BangladeshMapProps } from 'src/components/bangladesh-map/BangladeshMap.types';
+
+// ** Local Imports
+import { districts, MAP_WIDTH, MAP_HEIGHT } from 'src/data/districts';
+import { TooltipOverlay } from 'src/components/bangladesh-map/BangladeshMapOverlays';
+import { ZoomControls, ZoomIndicator } from 'src/components/bangladesh-map/BangladeshMapOverlays';
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 5;
@@ -42,13 +36,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     typeof window === 'undefined' || !window.matchMedia
       ? true
       : window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  const [tooltip, setTooltip] = useState<{
-    x: number;
-    y: number;
-    name: string;
-    bn_name: string;
-    division: string;
-  } | null>(null);
+  const [tooltip, setTooltip] = useState<MapTooltip | null>(null);
 
   // Zoom & pan state
   const [zoom, setZoom] = useState(1);
@@ -74,9 +62,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
 
   // Clamp pan so the map doesn't fly off screen
   const clampPan = useCallback((px: number, py: number, z: number) => {
-    const rect =
-      svgRef.current?.getBoundingClientRect() ??
-      containerRef.current?.getBoundingClientRect();
+    const rect = svgRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
     if (!rect) return { x: px, y: py };
     const scaledW = rect.width * z;
     const scaledH = rect.height * z;
@@ -153,9 +139,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
       if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
         didMousePan.current = true;
       }
-      setPan(
-        clampPan(panStart.current.panX + dx, panStart.current.panY + dy, zoom)
-      );
+      setPan(clampPan(panStart.current.panX + dx, panStart.current.panY + dy, zoom));
     },
     [isPanning, zoom, clampPan]
   );
@@ -194,22 +178,13 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
         lastTouchPoint.current = null;
         const t1 = e.touches[0],
           t2 = e.touches[1];
-        const dist = Math.hypot(
-          t2.clientX - t1.clientX,
-          t2.clientY - t1.clientY
-        );
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
         const rect = container.getBoundingClientRect();
         const cx = (t1.clientX + t2.clientX) / 2 - rect.left - rect.width / 2;
         const cy = (t1.clientY + t2.clientY) / 2 - rect.top - rect.height / 2;
 
-        if (
-          lastPinchDist.current !== null &&
-          lastPinchCenter.current !== null
-        ) {
-          const delta = Math.max(
-            -0.35,
-            Math.min(0.35, (dist - lastPinchDist.current) * 0.01)
-          );
+        if (lastPinchDist.current !== null && lastPinchCenter.current !== null) {
+          const delta = Math.max(-0.35, Math.min(0.35, (dist - lastPinchDist.current) * 0.01));
           handleZoom(delta, cx, cy);
         }
         lastPinchDist.current = dist;
@@ -228,8 +203,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
             setHoveredDistrict(null);
             setTooltip(null);
             setTouchedDistrict(null);
-            suppressDistrictSelectionUntil.current =
-              Date.now() + CLICK_SUPPRESS_MS;
+            suppressDistrictSelectionUntil.current = Date.now() + CLICK_SUPPRESS_MS;
           }
         }
 
@@ -247,10 +221,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
       if (e.touches.length === 2) {
         const t1 = e.touches[0],
           t2 = e.touches[1];
-        lastPinchDist.current = Math.hypot(
-          t2.clientX - t1.clientX,
-          t2.clientY - t1.clientY
-        );
+        lastPinchDist.current = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
       }
 
       if (e.touches.length === 1 && zoom > 1) {
@@ -352,10 +323,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     const updateScale = () => {
       const rect = svg.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
-      const scale = Math.min(
-        rect.width / contentBounds.width,
-        rect.height / contentBounds.height
-      );
+      const scale = Math.min(rect.width / contentBounds.width, rect.height / contentBounds.height);
       setViewBoxScale(scale || 1);
     };
 
@@ -461,9 +429,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
       if (!interactive || !onDistrictClick) return;
 
       const shouldSuppress =
-        isTouchPanning ||
-        touchMoved.current ||
-        Date.now() < suppressDistrictSelectionUntil.current;
+        isTouchPanning || touchMoved.current || Date.now() < suppressDistrictSelectionUntil.current;
 
       suppressDistrictSelectionUntil.current = Date.now() + CLICK_SUPPRESS_MS;
       e.preventDefault();
@@ -491,62 +457,31 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
       if (correctDistrict === district.name) return '#22c55e';
       if (wrongDistrict === district.name) return '#ef4444';
       if (answeredDistricts.includes(district.name)) return '#e2e8f0';
-      if (
-        hoveredDistrict === district.name ||
-        touchedDistrict === district.name
-      )
-        return '#fde68a';
-      if (highlightDivision && district.division === highlightDivision)
-        return district.divisionColor + '70';
-      if (highlightDivision && district.division !== highlightDivision)
-        return '#e2e8f0';
+      if (hoveredDistrict === district.name || touchedDistrict === district.name) return '#fde68a';
+      if (highlightDivision && district.division === highlightDivision) return district.divisionColor + '70';
+      if (highlightDivision && district.division !== highlightDivision) return '#e2e8f0';
       return district.divisionColor + '35';
     },
-    [
-      correctDistrict,
-      wrongDistrict,
-      answeredDistricts,
-      hoveredDistrict,
-      touchedDistrict,
-      highlightDivision
-    ]
+    [correctDistrict, wrongDistrict, answeredDistricts, hoveredDistrict, touchedDistrict, highlightDivision]
   );
 
   const getDistrictStroke = useCallback(
     (district: District): string => {
       if (correctDistrict === district.name) return '#16a34a';
       if (wrongDistrict === district.name) return '#dc2626';
-      if (
-        hoveredDistrict === district.name ||
-        touchedDistrict === district.name
-      )
-        return '#f59e0b';
+      if (hoveredDistrict === district.name || touchedDistrict === district.name) return '#f59e0b';
       if (answeredDistricts.includes(district.name)) return '#cbd5e1';
-      if (highlightDivision && district.division === highlightDivision)
-        return district.divisionColor;
-      if (highlightDivision && district.division !== highlightDivision)
-        return '#cbd5e1';
+      if (highlightDivision && district.division === highlightDivision) return district.divisionColor;
+      if (highlightDivision && district.division !== highlightDivision) return '#cbd5e1';
       return '#64748b';
     },
-    [
-      correctDistrict,
-      wrongDistrict,
-      hoveredDistrict,
-      touchedDistrict,
-      answeredDistricts,
-      highlightDivision
-    ]
+    [correctDistrict, wrongDistrict, hoveredDistrict, touchedDistrict, answeredDistricts, highlightDivision]
   );
 
   const getDistrictStrokeWidth = useCallback(
     (district: District): number => {
-      if (correctDistrict === district.name || wrongDistrict === district.name)
-        return 2.5;
-      if (
-        hoveredDistrict === district.name ||
-        touchedDistrict === district.name
-      )
-        return 1.8;
+      if (correctDistrict === district.name || wrongDistrict === district.name) return 2.5;
+      if (hoveredDistrict === district.name || touchedDistrict === district.name) return 1.8;
       return 0.5;
     },
     [correctDistrict, wrongDistrict, hoveredDistrict, touchedDistrict]
@@ -563,9 +498,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
 
     if (!viewBoxScale) return;
 
-    const divisionDistricts = districts.filter(
-      (d) => d.division === highlightDivision
-    );
+    const divisionDistricts = districts.filter((d) => d.division === highlightDivision);
 
     if (divisionDistricts.length === 0) return;
 
@@ -581,10 +514,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     const spanY = Math.max(30, maxY - minY);
     const fitZoomX = contentBounds.width / (spanX + 80);
     const fitZoomY = contentBounds.height / (spanY + 120);
-    const targetZoom = Math.max(
-      1.8,
-      Math.min(3.2, Math.min(MAX_ZOOM, fitZoomX, fitZoomY))
-    );
+    const targetZoom = Math.max(1.8, Math.min(3.2, Math.min(MAX_ZOOM, fitZoomX, fitZoomY)));
 
     const panSvgX = -targetZoom * (centerX - viewBoxCenterX);
     const panSvgY = -targetZoom * (centerY - viewBoxCenterY);
@@ -614,12 +544,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
       className='relative w-full h-full overflow-hidden'
       onMouseDown={handleMouseDown}
       style={{
-        cursor:
-          zoom > 1
-            ? isPanning || isTouchPanning
-              ? 'grabbing'
-              : 'grab'
-            : 'default'
+        cursor: zoom > 1 ? (isPanning || isTouchPanning ? 'grabbing' : 'grab') : 'default'
       }}
     >
       <svg
@@ -647,8 +572,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
                   strokeLinejoin='round'
                   className={interactive ? 'cursor-pointer' : ''}
                   style={{
-                    transition:
-                      'fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease'
+                    transition: 'fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease'
                   }}
                   onMouseEnter={(e) => handleMouseEnter(district, e)}
                   onMouseMove={(e) => handleMouseMoveDistrict(district, e)}
@@ -701,9 +625,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
             {correctDistrict &&
               !showLabels &&
               districts
-                .filter(
-                  (d) => d.name === correctDistrict || d.name === wrongDistrict
-                )
+                .filter((d) => d.name === correctDistrict || d.name === wrongDistrict)
                 .map((district) => (
                   <text
                     key={`result-label-${district.name}`}
@@ -711,9 +633,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
                     y={district.labelY}
                     textAnchor='middle'
                     dominantBaseline='central'
-                    fill={
-                      district.name === correctDistrict ? '#16a34a' : '#dc2626'
-                    }
+                    fill={district.name === correctDistrict ? '#16a34a' : '#dc2626'}
                     fontSize={7}
                     fontWeight='700'
                     className='pointer-events-none select-none'
@@ -728,59 +648,16 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
         </g>
       </svg>
 
-      {/* Zoom controls */}
-      <div className='absolute bottom-3 right-3 flex flex-col gap-1.5 z-10'>
-        <button
-          onClick={() => handleZoom(0.5)}
-          className='w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 cursor-pointer active:scale-95 transition-all text-lg font-bold'
-          title='Zoom in'
-        >
-          +
-        </button>
-        <button
-          onClick={() => handleZoom(-0.5)}
-          className='w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 cursor-pointer active:scale-95 transition-all text-lg font-bold'
-          title='Zoom out'
-        >
-          −
-        </button>
-        {zoom > 1 && (
-          <button
-            onClick={resetZoom}
-            className='w-9 h-9 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 cursor-pointer active:scale-95 transition-all text-xs font-medium'
-            title='Reset zoom'
-          >
-            ↺
-          </button>
-        )}
-      </div>
+      <ZoomControls
+        zoom={zoom}
+        onZoomIn={() => handleZoom(0.5)}
+        onZoomOut={() => handleZoom(-0.5)}
+        onResetZoom={resetZoom}
+      />
 
-      {/* Zoom level indicator */}
-      {zoom > 1 && (
-        <div
-          className={`absolute right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-md backdrop-blur-sm ${
-            showLabels ? 'top-12' : 'top-3'
-          }`}
-        >
-          {Math.round(zoom * 100)}%
-        </div>
-      )}
+      <ZoomIndicator zoom={zoom} showLabels={showLabels} />
 
-      {/* Tooltip */}
-      {tooltip && !hideTooltip && (
-        <div
-          className='absolute bg-gray-900/90 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-lg shadow-xl pointer-events-none z-50 whitespace-nowrap'
-          style={{
-            left: tooltip.x + 12,
-            top: tooltip.y - 35
-          }}
-        >
-          <div className='font-bold text-sm'>{tooltip.name}</div>
-          <div className='text-gray-300 text-[10px]'>
-            {tooltip.bn_name} &bull; {tooltip.division}
-          </div>
-        </div>
-      )}
+      <TooltipOverlay tooltip={tooltip} hideTooltip={hideTooltip} />
     </div>
   );
 };
