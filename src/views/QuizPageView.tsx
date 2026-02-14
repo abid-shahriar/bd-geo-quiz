@@ -7,30 +7,24 @@ import type { GameState } from 'src/hooks/useGameState';
 // ** Local Imports
 import { BangladeshMap } from 'src/components/bangladesh-map/BangladeshMap';
 
-interface QuizScreenProps {
+interface QuizPageViewProps {
   state: GameState;
   onDistrictClick: (name: string) => void;
   onNext: () => void;
   onBackToMenu: () => void;
+  onRequestEnd?: () => void;
   isGameOver: boolean;
-  showEndConfirm: boolean;
-  onEndGame: () => void;
-  onRequestEnd: () => void;
-  onCancelEnd: () => void;
 }
 
-export function QuizScreen({
+export function QuizPageView({
   state,
   onDistrictClick,
   onNext,
   onBackToMenu,
-  isGameOver,
-  showEndConfirm,
-  onEndGame,
   onRequestEnd,
-  onCancelEnd
-}: QuizScreenProps) {
-  const isResult = state.mode === 'result';
+  isGameOver
+}: QuizPageViewProps) {
+  const isResult = state.lastAnswer !== null;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -42,7 +36,11 @@ export function QuizScreen({
         }
       }
       if (e.key === 'Escape') {
-        onRequestEnd();
+        if (onRequestEnd) {
+          onRequestEnd();
+        } else {
+          onBackToMenu();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -51,42 +49,12 @@ export function QuizScreen({
 
   return (
     <div className='flex-1 flex flex-col min-h-0'>
-      {showEndConfirm && (
-        <div className='fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
-          <div className='bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center'>
-            <h3 className='text-lg font-bold text-gray-800 mb-2'>End the quiz?</h3>
-            <p className='text-gray-500 text-sm mb-5 leading-relaxed'>
-              You've answered {state.totalQuestions} of 64 questions.
-              <br />
-              Score so far:{' '}
-              <strong>
-                {state.score}/{state.totalQuestions}
-              </strong>
-            </p>
-            <div className='flex gap-3'>
-              <button
-                onClick={onCancelEnd}
-                className='flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-xl cursor-pointer transition-all'
-              >
-                Continue
-              </button>
-              <button
-                onClick={onEndGame}
-                className='flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 px-4 rounded-xl cursor-pointer transition-all'
-              >
-                End Quiz
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className='flex-1 flex flex-col lg:flex-row gap-4 min-h-0'>
         <div className='flex-1 min-h-0 overflow-hidden order-2 lg:order-1 bg-white/50 rounded-2xl border border-gray-100 p-0'>
           <BangladeshMap
             onDistrictClick={onDistrictClick}
-            interactive={state.mode === 'quiz'}
-            hideTooltip={state.mode === 'quiz'}
+            interactive={!isResult}
+            hideTooltip={!isResult}
             correctDistrict={state.lastAnswer?.correct || null}
             wrongDistrict={state.lastAnswer && !state.lastAnswer.isCorrect ? state.lastAnswer.selected : null}
             answeredDistricts={state.answeredDistricts.filter((d) => d !== state.lastAnswer?.correct)}

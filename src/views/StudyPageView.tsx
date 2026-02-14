@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { DIVISION_COLORS } from 'src/data/districts';
 import { BangladeshMap } from 'src/components/bangladesh-map/BangladeshMap';
 
-export function StudyScreen() {
+export function StudyPageView() {
   const [showDivisionFilter, setShowDivisionFilter] = useState<string | null>(null);
   const [mapResetToken, setMapResetToken] = useState(0);
   const [showMobileDivisions, setShowMobileDivisions] = useState(false);

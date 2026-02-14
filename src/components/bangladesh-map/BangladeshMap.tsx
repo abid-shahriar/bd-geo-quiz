@@ -627,22 +627,30 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
               districts
                 .filter((d) => d.name === correctDistrict || d.name === wrongDistrict)
                 .map((district) => (
-                  <text
-                    key={`result-label-${district.name}`}
-                    x={district.labelX}
-                    y={district.labelY}
-                    textAnchor='middle'
-                    dominantBaseline='central'
-                    fill={district.name === correctDistrict ? '#16a34a' : '#dc2626'}
-                    fontSize={7}
-                    fontWeight='700'
-                    className='pointer-events-none select-none'
-                    style={{
-                      textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white'
-                    }}
-                  >
-                    {district.name}
-                  </text>
+                  <g key={`result-label-${district.name}`} className='pointer-events-none select-none'>
+                    <rect
+                      x={district.labelX - (district.name.length * 2.15 + 4)}
+                      y={district.labelY - 4.7}
+                      width={district.name.length * 4.3 + 8}
+                      height={9.4}
+                      rx={2.4}
+                      fill='rgba(255,255,255,0.92)'
+                      stroke={district.name === correctDistrict ? '#16a34a' : '#dc2626'}
+                      strokeWidth={0.8}
+                    />
+                    <text
+                      x={district.labelX}
+                      y={district.labelY}
+                      textAnchor='middle'
+                      dominantBaseline='central'
+                      fill='#0f172a'
+                      fontSize={6.2}
+                      fontWeight='800'
+                      style={{ textRendering: 'geometricPrecision' }}
+                    >
+                      {district.name}
+                    </text>
+                  </g>
                 ))}
           </g>
         </g>

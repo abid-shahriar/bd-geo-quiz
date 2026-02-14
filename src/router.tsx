@@ -1,0 +1,17 @@
+// ** Third Party Imports
+import { createRouter } from '@tanstack/react-router';
+
+// ** Local Imports
+import { routeTree } from 'src/routeTree.gen';
+
+export const router = createRouter({
+  routeTree,
+  defaultPreload: 'intent',
+  scrollRestoration: true
+});
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router;
+  }
+}

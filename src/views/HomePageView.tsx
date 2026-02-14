@@ -1,13 +1,14 @@
 // ** Local Imports
 import { DIVISION_COLORS } from 'src/data/districts';
 
-interface MenuScreenProps {
+interface HomePageViewProps {
   onStartQuiz: () => void;
   onStartStudy: () => void;
+  onDismissLastScore?: () => void;
   lastScore: { score: number; totalQuestions: number } | null;
 }
 
-export function MenuScreen({ onStartQuiz, onStartStudy, lastScore }: MenuScreenProps) {
+export function HomePageView({ onStartQuiz, onStartStudy, onDismissLastScore, lastScore }: HomePageViewProps) {
   return (
     <div className='flex-1 flex flex-col items-center justify-center gap-6 py-8'>
       <div className='text-center'>
@@ -22,7 +23,15 @@ export function MenuScreen({ onStartQuiz, onStartStudy, lastScore }: MenuScreenP
       </div>
 
       {lastScore && lastScore.totalQuestions > 0 && (
-        <div className='bg-white rounded-2xl shadow-md p-6 text-center border border-emerald-100 min-w-[180px]'>
+        <div className='relative bg-white rounded-xl shadow-md p-2 text-center border border-emerald-100 min-w-[180px]'>
+          <button
+            type='button'
+            aria-label='Clear last score'
+            onClick={onDismissLastScore}
+            className='absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 w-5 h-5 rounded-full bg-red-100 border border-red-200 shadow-sm text-red-600 hover:bg-red-200 hover:text-red-700 transition-colors flex items-center justify-center cursor-pointer z-10 text-[10px]'
+          >
+            ✕
+          </button>
           <p className='text-gray-400 text-xs font-medium uppercase tracking-wide mb-1'>Last Score</p>
           <p className='text-3xl font-extrabold text-emerald-700'>
             {lastScore.score}
