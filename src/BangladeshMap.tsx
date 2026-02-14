@@ -19,6 +19,9 @@ interface BangladeshMapProps {
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 5;
+const CLICK_SUPPRESS_MS = 280;
+const TOUCH_TAP_MOVE_THRESHOLD = 10;
+const TOUCH_PAN_START_THRESHOLD = 6;
 
 export const BangladeshMap: React.FC<BangladeshMapProps> = ({
   onDistrictClick,
@@ -33,6 +36,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
+  const [touchedDistrict, setTouchedDistrict] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{
     x: number;
     y: number;
@@ -51,6 +55,12 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
   const lastPinchDist = useRef<number | null>(null);
   const lastPinchCenter = useRef<{ x: number; y: number } | null>(null);
   const lastTouchPoint = useRef<{ x: number; y: number } | null>(null);
+  const didMousePan = useRef(false);
+  const suppressDistrictSelectionUntil = useRef(0);
+  const touchStartPoint = useRef<{ x: number; y: number } | null>(null);
+  const touchMoved = useRef(false);
+  const activeTouchDistrict = useRef<string | null>(null);
+  const touchPanStarted = useRef(false);
 
   // Clamp pan so the map doesn't fly off screen
   const clampPan = useCallback((px: number, py: number, z: number) => {
@@ -113,6 +123,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     (e: React.MouseEvent) => {
       if (zoom <= 1) return;
       setIsPanning(true);
+      didMousePan.current = false;
       panStart.current = {
         x: e.clientX,
         y: e.clientY,
@@ -128,6 +139,9 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
       if (!isPanning) return;
       const dx = e.clientX - panStart.current.x;
       const dy = e.clientY - panStart.current.y;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        didMousePan.current = true;
+      }
       setPan(
         clampPan(panStart.current.panX + dx, panStart.current.panY + dy, zoom)
       );
@@ -136,6 +150,9 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
   );
 
   const handleMouseUpGlobal = useCallback(() => {
+    if (didMousePan.current) {
+      suppressDistrictSelectionUntil.current = Date.now() + CLICK_SUPPRESS_MS;
+    }
     setIsPanning(false);
   }, []);
 
@@ -158,6 +175,10 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     const onTouchMove = (e: TouchEvent) => {
       if (e.touches.length === 2) {
         e.preventDefault();
+        setHoveredDistrict(null);
+        setTooltip(null);
+        setTouchedDistrict(null);
+        suppressDistrictSelectionUntil.current = Date.now() + CLICK_SUPPRESS_MS;
         setIsTouchPanning(false);
         lastTouchPoint.current = null;
         const t1 = e.touches[0],
@@ -185,9 +206,23 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
       } else if (e.touches.length === 1 && zoom > 1) {
         e.preventDefault();
         const t = e.touches[0];
-        setIsTouchPanning(true);
 
-        if (lastTouchPoint.current) {
+        const start = touchStartPoint.current;
+        if (start && !touchPanStarted.current) {
+          const totalDx = t.clientX - start.x;
+          const totalDy = t.clientY - start.y;
+          if (Math.hypot(totalDx, totalDy) > TOUCH_PAN_START_THRESHOLD) {
+            touchPanStarted.current = true;
+            setIsTouchPanning(true);
+            setHoveredDistrict(null);
+            setTooltip(null);
+            setTouchedDistrict(null);
+            suppressDistrictSelectionUntil.current =
+              Date.now() + CLICK_SUPPRESS_MS;
+          }
+        }
+
+        if (touchPanStarted.current && lastTouchPoint.current) {
           const dx = t.clientX - lastTouchPoint.current.x;
           const dy = t.clientY - lastTouchPoint.current.y;
           setPan((prevPan) => clampPan(prevPan.x + dx, prevPan.y + dy, zoom));
@@ -209,8 +244,10 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
 
       if (e.touches.length === 1 && zoom > 1) {
         const t = e.touches[0];
+        touchStartPoint.current = { x: t.clientX, y: t.clientY };
         lastTouchPoint.current = { x: t.clientX, y: t.clientY };
-        setIsTouchPanning(true);
+        touchPanStarted.current = false;
+        setIsTouchPanning(false);
       }
     };
 
@@ -222,10 +259,13 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
 
       if (e.touches.length === 1 && zoom > 1) {
         const t = e.touches[0];
+        touchStartPoint.current = { x: t.clientX, y: t.clientY };
         lastTouchPoint.current = { x: t.clientX, y: t.clientY };
-        setIsTouchPanning(true);
+        touchPanStarted.current = false;
+        setIsTouchPanning(false);
       } else {
         lastTouchPoint.current = null;
+        touchPanStarted.current = false;
         setIsTouchPanning(false);
       }
     };
@@ -234,7 +274,9 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
       lastPinchDist.current = null;
       lastPinchCenter.current = null;
       lastTouchPoint.current = null;
+      touchPanStarted.current = false;
       setIsTouchPanning(false);
+      suppressDistrictSelectionUntil.current = Date.now() + CLICK_SUPPRESS_MS;
     };
 
     container.addEventListener('touchmove', onTouchMove, { passive: false });
@@ -320,36 +362,80 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
   const handleClick = useCallback(
     (districtName: string) => {
       if (!interactive || !onDistrictClick) return;
+      if (isPanning || isTouchPanning) return;
+      if (Date.now() < suppressDistrictSelectionUntil.current) return;
       onDistrictClick(districtName);
     },
-    [interactive, onDistrictClick]
+    [interactive, onDistrictClick, isPanning, isTouchPanning]
   );
-
-  // Touch support for district clicking
-  const [touchedDistrict, setTouchedDistrict] = useState<string | null>(null);
 
   const handleTouchStart = useCallback(
     (district: District, e: React.TouchEvent) => {
       if (!interactive) return;
-      if (zoom > 1) return; // let pan handler work
+      const touch = e.touches[0];
+      if (touch) {
+        touchStartPoint.current = { x: touch.clientX, y: touch.clientY };
+      }
+      touchMoved.current = false;
+      activeTouchDistrict.current = district.name;
+
       e.preventDefault();
       setTouchedDistrict(district.name);
     },
-    [interactive, zoom]
+    [interactive]
+  );
+
+  const handleTouchMoveDistrict = useCallback(
+    (e: React.TouchEvent) => {
+      if (!interactive) return;
+      const touch = e.touches[0];
+      if (!touch || !touchStartPoint.current) return;
+
+      const dx = touch.clientX - touchStartPoint.current.x;
+      const dy = touch.clientY - touchStartPoint.current.y;
+      if (Math.hypot(dx, dy) > TOUCH_TAP_MOVE_THRESHOLD) {
+        touchMoved.current = true;
+        setTouchedDistrict(null);
+        suppressDistrictSelectionUntil.current = Date.now() + CLICK_SUPPRESS_MS;
+      }
+    },
+    [interactive]
   );
 
   const handleTouchEnd = useCallback(
-    (district: District, e: React.TouchEvent) => {
+    (e: React.TouchEvent) => {
       if (!interactive || !onDistrictClick) return;
-      if (zoom > 1) return;
+
+      const districtName = activeTouchDistrict.current;
+      if (!districtName) return;
+
+      const shouldSuppress =
+        isTouchPanning ||
+        touchMoved.current ||
+        Date.now() < suppressDistrictSelectionUntil.current;
+
+      suppressDistrictSelectionUntil.current = Date.now() + CLICK_SUPPRESS_MS;
       e.preventDefault();
-      if (touchedDistrict === district.name) {
-        onDistrictClick(district.name);
+
+      if (!shouldSuppress) {
+        onDistrictClick(districtName);
       }
+
+      activeTouchDistrict.current = null;
+      touchStartPoint.current = null;
+      touchMoved.current = false;
       setTouchedDistrict(null);
     },
-    [interactive, onDistrictClick, touchedDistrict, zoom]
+    [interactive, onDistrictClick, isTouchPanning]
   );
+
+  const handleTouchCancelDistrict = useCallback(() => {
+    activeTouchDistrict.current = null;
+    touchStartPoint.current = null;
+    touchMoved.current = false;
+    setTouchedDistrict(null);
+    suppressDistrictSelectionUntil.current = Date.now() + CLICK_SUPPRESS_MS;
+  }, []);
 
   const getDistrictFill = useCallback(
     (district: District): string => {
@@ -480,6 +566,8 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
         ref={svgRef}
         viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
         className='w-full h-full max-h-[80vh]'
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancelDistrict}
         style={{
           touchAction: 'none'
         }}
@@ -507,7 +595,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
                 onMouseLeave={handleMouseLeave}
                 onClick={() => handleClick(district.name)}
                 onTouchStart={(e) => handleTouchStart(district, e)}
-                onTouchEnd={(e) => handleTouchEnd(district, e)}
+                onTouchMove={handleTouchMoveDistrict}
               />
             ))}
 
