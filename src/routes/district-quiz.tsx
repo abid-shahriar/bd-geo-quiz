@@ -66,13 +66,13 @@ function DistrictQuizPage() {
             <div className='flex gap-3'>
               <button
                 onClick={() => setShowEndConfirm(false)}
-                className='flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-xl cursor-pointer transition-all'
+                className='flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded cursor-pointer transition-all'
               >
                 Continue
               </button>
               <button
                 onClick={handleConfirmEndQuiz}
-                className='flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 px-4 rounded-xl cursor-pointer transition-all'
+                className='flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 px-4 rounded cursor-pointer transition-all'
               >
                 End Quiz
               </button>
@@ -81,12 +81,12 @@ function DistrictQuizPage() {
         </div>
       )}
 
-      <header className='w-full bg-white/80 backdrop-blur-sm shadow-sm border-b border-emerald-100 sticky top-0 z-40 mb-3 sm:mb-4 -mx-4 sm:-mx-6 px-4 sm:px-6'>
+      <header className='w-full bg-white/80 backdrop-blur-sm shadow-sm border-b border-emerald-100 sticky top-0 z-40 mb-3 sm:mb-4 px-4 sm:px-6'>
         <div className='relative max-w-6xl mx-auto py-2.5 flex items-center justify-between'>
           <div className='flex items-center gap-2 z-10'>
             <button
               onClick={() => setShowEndConfirm(true)}
-              className='bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-600 hover:text-red-600 font-semibold text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 rounded-lg cursor-pointer transition-all shadow-sm flex-shrink-0'
+              className='bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-600 hover:text-red-600 font-semibold text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 rounded cursor-pointer transition-all shadow-sm flex-shrink-0'
             >
               ✕ End
             </button>
@@ -101,11 +101,8 @@ function DistrictQuizPage() {
             <span className='sm:hidden'>BD Quiz</span>
           </Link>
 
-          <div className='flex items-center gap-2 text-sm z-10'>
-            <div className='bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-semibold'>
-              ✓ {state.score}/{state.totalQuestions}
-            </div>
-            <div className='bg-sky-100 text-sky-800 px-2.5 py-1 rounded-full font-medium'>{progress.current}/64</div>
+          <div className='bg-emerald-100 text-emerald-800 px-3 py-1 rounded font-semibold text-sm'>
+            ✓ {state.score}/{state.totalQuestions}
           </div>
         </div>
 

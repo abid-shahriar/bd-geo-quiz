@@ -48,7 +48,7 @@ export function QuizPageView({
   }, [isResult, isGameOver, onNext, onBackToMenu, onRequestEnd]);
 
   return (
-    <div className='flex-1 flex flex-col min-h-0'>
+    <div className='flex-1 px-4 pb-4  flex flex-col min-h-0'>
       <div className='flex-1 flex flex-col lg:flex-row gap-4 min-h-0'>
         <div className='flex-1 min-h-0 overflow-hidden order-2 lg:order-1 bg-white/50 rounded-2xl border border-gray-100 p-0'>
           <BangladeshMap
@@ -105,7 +105,7 @@ export function QuizPageView({
                 )}
 
                 <div className='mt-2 flex flex-col items-center gap-2'>
-                  <div className='bg-white rounded-xl p-3 w-full border border-gray-200 mb-1.5'>
+                  <div className='bg-white rounded p-3 w-full border border-gray-200 mb-1.5'>
                     <p className='text-xs text-gray-400 uppercase tracking-wide font-medium'>Final Score</p>
                     <p className='text-2xl font-extrabold text-emerald-700 mt-1.5'>
                       {state.score}
@@ -123,7 +123,7 @@ export function QuizPageView({
                   </div>
                   <button
                     onClick={onBackToMenu}
-                    className='w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-xl cursor-pointer active:scale-[0.97] transition-all text-sm'
+                    className='w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded cursor-pointer active:scale-[0.97] transition-all text-sm'
                   >
                     Back to Menu
                   </button>
@@ -158,7 +158,7 @@ export function QuizPageView({
             )}
           </div>
 
-          <div className='hidden lg:block mt-3 bg-white rounded-xl p-4 border border-gray-100 text-sm text-gray-500'>
+          <div className='hidden lg:block mt-3 bg-white rounded p-4 border border-gray-100 text-sm text-gray-500'>
             <div className='flex justify-between mb-2'>
               <span>Correct</span>
               <span className='font-semibold text-emerald-600'>{state.score}</span>

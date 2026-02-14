@@ -10,7 +10,7 @@ interface HomePageViewProps {
 
 export function HomePageView({ onStartQuiz, onStartStudy, onDismissLastScore, lastScore }: HomePageViewProps) {
   return (
-    <div className='flex-1 flex flex-col items-center justify-center gap-6 py-8'>
+    <div className='flex-1 flex flex-col items-center justify-center gap-6 px-4 sm:px-6 py-8'>
       <div className='text-center'>
         <h1 className='text-3xl md:text-4xl font-extrabold text-emerald-800 mb-2 tracking-tight'>
           Bangladesh District Quiz
@@ -23,7 +23,7 @@ export function HomePageView({ onStartQuiz, onStartStudy, onDismissLastScore, la
       </div>
 
       {lastScore && lastScore.totalQuestions > 0 && (
-        <div className='relative bg-white rounded-xl shadow-md p-2 text-center border border-emerald-100 min-w-[180px]'>
+        <div className='relative bg-white rounded shadow-md p-2 text-center border border-emerald-100 min-w-[180px]'>
           <button
             type='button'
             aria-label='Clear last score'
@@ -46,19 +46,19 @@ export function HomePageView({ onStartQuiz, onStartStudy, onDismissLastScore, la
       <div className='flex flex-col sm:flex-row gap-3 w-full max-w-sm px-2'>
         <button
           onClick={onStartQuiz}
-          className='flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all text-md cursor-pointer active:scale-[0.97] hover:-translate-y-0.5'
+          className='flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded shadow-lg hover:shadow-xl transition-all text-md cursor-pointer active:scale-[0.97] hover:-translate-y-0.5'
         >
           🎯 Start Quiz
         </button>
         <button
           onClick={onStartStudy}
-          className='flex-1 bg-white hover:bg-sky-50 text-sky-700 font-semibold py-2 px-6 rounded-xl shadow-md hover:shadow-lg transition-all text-md cursor-pointer active:scale-[0.97] border-2 border-sky-200 hover:-translate-y-0.5'
+          className='flex-1 bg-white hover:bg-sky-50 text-sky-700 font-semibold py-2 px-6 rounded shadow-md hover:shadow-lg transition-all text-md cursor-pointer active:scale-[0.97] border-2 border-sky-200 hover:-translate-y-0.5'
         >
           📖 Study Map
         </button>
       </div>
 
-      <div className='bg-white rounded-xl shadow-md p-5 w-full max-w-sm border border-gray-100'>
+      <div className='bg-white rounded shadow-md p-5 w-full max-w-sm border border-gray-100'>
         <h3 className='font-semibold text-gray-600 mb-3 text-md mb-4 pb-2 border-b text-center uppercase tracking-wide'>
           8 Divisions
         </h3>

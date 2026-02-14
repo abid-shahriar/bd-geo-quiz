@@ -29,23 +29,23 @@ export function StudyPageView() {
   };
 
   return (
-    <div className='flex-1 flex flex-col min-h-0'>
+    <div className='flex-1 px-4 pb-4 flex flex-col min-h-0'>
       <div className='flex-1 flex flex-col lg:flex-row gap-4 min-h-0'>
         <div className='relative flex-1 min-h-0 order-1 bg-white/50 rounded-2xl border border-gray-100 overflow-hidden'>
           <div className='lg:hidden absolute top-3 left-3 z-20'>
             <button
               onClick={() => setShowMobileDivisions((prev) => !prev)}
-              className='bg-white/95 backdrop-blur-sm border border-gray-200 text-gray-700 font-semibold text-xs px-3 py-2 rounded-xl shadow-md flex items-center gap-1.5'
+              className='bg-white/95 backdrop-blur-sm border border-gray-200 text-gray-700 font-semibold text-xs px-3 py-2 rounded shadow-md flex items-center gap-1.5'
             >
               🧭 {showDivisionFilter ?? 'Divisions'} {showMobileDivisions ? '▲' : '▼'}
             </button>
 
             {showMobileDivisions && (
-              <div className='mt-2 w-[min(82vw,18rem)] max-h-[45vh] overflow-y-auto bg-white/95 backdrop-blur-sm rounded-xl border border-gray-200 shadow-lg p-2.5'>
+              <div className='mt-2 w-[min(82vw,18rem)] max-h-[45vh] overflow-y-auto bg-white/95 backdrop-blur-sm rounded border border-gray-200 shadow-lg p-2.5'>
                 {showDivisionFilter && (
                   <button
                     onClick={clearDivisionSelection}
-                    className='w-full mb-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold px-3 py-2 rounded-lg border border-red-200 transition-colors cursor-pointer'
+                    className='w-full mb-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold px-3 py-2 rounded border border-red-200 transition-colors cursor-pointer'
                   >
                     Clear selection
                   </button>
@@ -54,7 +54,7 @@ export function StudyPageView() {
                   {Object.entries(DIVISION_COLORS).map(([division, color]) => (
                     <button
                       key={`mobile-${division}`}
-                      className={`flex items-center gap-2 text-xs px-2.5 py-2 rounded-lg transition-all cursor-pointer text-left min-w-0 ${
+                      className={`flex items-center gap-2 text-xs px-2.5 py-2 rounded transition-all cursor-pointer text-left min-w-0 ${
                         showDivisionFilter === division
                           ? 'font-semibold text-gray-900 shadow-sm outline outline-2'
                           : 'text-gray-600 hover:bg-gray-50'
@@ -102,7 +102,7 @@ export function StudyPageView() {
             {showDivisionFilter && (
               <button
                 onClick={clearDivisionSelection}
-                className='w-full mb-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold px-3 py-2 rounded-lg border border-red-200 transition-colors cursor-pointer'
+                className='w-full mb-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold px-3 py-2 rounded border border-red-200 transition-colors cursor-pointer'
               >
                 Clear selection
               </button>
@@ -111,7 +111,7 @@ export function StudyPageView() {
               {Object.entries(DIVISION_COLORS).map(([division, color]) => (
                 <button
                   key={`desktop-${division}`}
-                  className={`flex items-center gap-2 text-sm px-3 py-2 rounded-xl transition-all cursor-pointer text-left min-w-0 ${
+                  className={`flex items-center gap-2 text-sm px-3 py-2 rounded transition-all cursor-pointer text-left min-w-0 ${
                     showDivisionFilter === division
                       ? 'font-semibold text-gray-900 shadow-sm outline outline-2'
                       : 'text-gray-600 hover:bg-gray-50'
