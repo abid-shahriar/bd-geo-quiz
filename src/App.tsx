@@ -24,7 +24,7 @@ function App() {
   };
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-sky-50 flex flex-col items-center'>
+    <div className='min-h-dvh bg-gradient-to-br from-emerald-50 via-teal-50 to-sky-50 flex flex-col items-center'>
       {/* Header */}
       <header className='w-full bg-white/80 backdrop-blur-sm shadow-sm border-b border-emerald-100 sticky top-0 z-40'>
         <div className='max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between'>
@@ -70,7 +70,7 @@ function App() {
           )}
         </div>
 
-        {state.mode === 'quiz' && (
+        {(state.mode === 'quiz' || state.mode === 'result') && (
           <div className='max-w-6xl mx-auto px-4 sm:px-6 pb-2'>
             <div className='flex items-center gap-3'>
               <div className='flex-1 bg-gray-200 rounded-full h-2 overflow-hidden'>
@@ -231,7 +231,8 @@ function StudyScreen() {
               onClick={() => setShowMobileDivisions((prev) => !prev)}
               className='bg-white/95 backdrop-blur-sm border border-gray-200 text-gray-700 font-semibold text-xs px-3 py-2 rounded-xl shadow-md flex items-center gap-1.5'
             >
-              🧭 {showDivisionFilter ?? 'Divisions'} {showMobileDivisions ? '▲' : '▼'}
+              🧭 {showDivisionFilter ?? 'Divisions'}{' '}
+              {showMobileDivisions ? '▲' : '▼'}
             </button>
 
             {showMobileDivisions && (
@@ -418,7 +419,7 @@ function QuizScreen({
 
       <div className='flex-1 flex flex-col lg:flex-row gap-4 min-h-0'>
         {/* Map */}
-        <div className='flex-1 min-h-0 order-2 lg:order-1 bg-white/50 rounded-2xl border border-gray-100 p-2 sm:p-3'>
+        <div className='flex-1 min-h-0 order-2 lg:order-1 bg-white/50 rounded-2xl border border-gray-100 p-0'>
           <BangladeshMap
             onDistrictClick={onDistrictClick}
             interactive={state.mode === 'quiz'}
@@ -438,7 +439,11 @@ function QuizScreen({
         {/* Question / Result Panel - sidebar on desktop, top on mobile */}
         <div className='lg:w-72 flex-shrink-0 order-1 lg:order-2'>
           <div
-            className={`text-center py-5 px-5 rounded-2xl shadow-sm transition-colors duration-300 ${
+            className={`text-center px-3 py-2.5 sm:px-4 sm:py-3 rounded-2xl shadow-sm transition-colors duration-300 flex flex-col ${
+              isGameOver
+                ? 'min-h-[185px] sm:min-h-[195px]'
+                : 'h-[110px] sm:h-[148px] lg:h-[150px]'
+            } ${
               isResult
                 ? state.lastAnswer?.isCorrect
                   ? 'bg-emerald-50 border-2 border-emerald-200'
@@ -447,89 +452,110 @@ function QuizScreen({
             }`}
           >
             {!isResult ? (
-              <>
-                <p className='text-gray-400 text-xs mb-2 uppercase tracking-wide font-medium'>
-                  Find on map
-                </p>
-                <p className='text-2xl lg:text-3xl font-extrabold text-emerald-800 tracking-tight'>
-                  {state.currentDistrict}
-                </p>
-                <p className='text-gray-400 text-xs mt-3'>
-                  Click the district on the map
-                </p>
-              </>
-            ) : (
+              <div className='h-full flex flex-col'>
+                <div className='flex-1 flex flex-col justify-center'>
+                  <p className='text-xl sm:text-2xl lg:text-2xl font-extrabold text-emerald-800 tracking-tight leading-tight'>
+                    {state.currentDistrict}
+                  </p>
+                  <p className='text-gray-500 text-xs sm:text-sm mt-1.5'>
+                    Tap the district on the map
+                  </p>
+                </div>
+                <div className='pt-1.5'>
+                  <p className='text-xs text-emerald-600 font-medium'>
+                    Waiting for your answer...
+                  </p>
+                </div>
+              </div>
+            ) : isGameOver ? (
               <>
                 {state.lastAnswer?.isCorrect ? (
-                  <div>
-                    <div className='text-4xl mb-2'>✅</div>
-                    <p className='text-emerald-700 font-bold text-lg'>
+                  <div className='pt-0.5'>
+                    <p className='text-emerald-700 font-bold text-sm sm:text-base'>
                       Correct!
                     </p>
-                    <p className='text-emerald-600 text-sm mt-1'>
+                    <p className='text-emerald-600 text-xs sm:text-sm mt-0.5 truncate'>
                       <strong>{state.lastAnswer.correct}</strong>
                     </p>
                   </div>
                 ) : (
-                  <div>
-                    <div className='text-4xl mb-2'>❌</div>
-                    <p className='text-red-700 font-bold text-lg'>Wrong!</p>
-                    <p className='text-red-600 text-sm mt-1'>
-                      You clicked <strong>{state.lastAnswer?.selected}</strong>
+                  <div className='pt-0.5'>
+                    <p className='text-red-700 font-bold text-sm sm:text-base'>
+                      Wrong!
                     </p>
-                    <p className='text-red-500 text-xs mt-1'>
+                    <p className='text-red-600 text-[11px] sm:text-xs mt-0.5 truncate'>
+                      Your: <strong>{state.lastAnswer?.selected}</strong> •
                       Correct: <strong>{state.lastAnswer?.correct}</strong>
                     </p>
                   </div>
                 )}
 
-                <div className='mt-5 flex flex-col items-center gap-3'>
-                  {isGameOver ? (
-                    <>
-                      <div className='bg-white rounded-xl p-4 w-full border border-gray-200 mb-2'>
-                        <p className='text-xs text-gray-400 uppercase tracking-wide font-medium'>
-                          Final Score
-                        </p>
-                        <p className='text-3xl font-extrabold text-emerald-700 mt-2'>
-                          {state.score}
-                          <span className='text-lg text-gray-400'>/64</span>
-                        </p>
-                        <p
-                          className='text-sm font-medium mt-1.5'
-                          style={{
-                            color:
-                              state.score >= 48
-                                ? '#059669'
-                                : state.score >= 32
-                                  ? '#d97706'
-                                  : '#dc2626'
-                          }}
-                        >
-                          {state.score >= 48
-                            ? '🌟 Excellent!'
+                <div className='mt-2 flex flex-col items-center gap-2'>
+                  <div className='bg-white rounded-xl p-3 w-full border border-gray-200 mb-1.5'>
+                    <p className='text-xs text-gray-400 uppercase tracking-wide font-medium'>
+                      Final Score
+                    </p>
+                    <p className='text-2xl font-extrabold text-emerald-700 mt-1.5'>
+                      {state.score}
+                      <span className='text-lg text-gray-400'>/64</span>
+                    </p>
+                    <p
+                      className='text-sm font-medium mt-1.5'
+                      style={{
+                        color:
+                          state.score >= 48
+                            ? '#059669'
                             : state.score >= 32
-                              ? '👍 Good job!'
-                              : '📚 Keep practicing!'}{' '}
-                          {Math.round((state.score / 64) * 100)}%
-                        </p>
-                      </div>
-                      <button
-                        onClick={onBackToMenu}
-                        className='w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-5 rounded-xl cursor-pointer active:scale-[0.97] transition-all'
-                      >
-                        Back to Menu
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={onNext}
-                      className='w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-5 rounded-xl cursor-pointer active:scale-[0.97] transition-all'
+                              ? '#d97706'
+                              : '#dc2626'
+                      }}
                     >
-                      Next District →
-                    </button>
-                  )}
+                      {state.score >= 48
+                        ? '🌟 Excellent!'
+                        : state.score >= 32
+                          ? '👍 Good job!'
+                          : '📚 Keep practicing!'}{' '}
+                      {Math.round((state.score / 64) * 100)}%
+                    </p>
+                  </div>
+                  <button
+                    onClick={onBackToMenu}
+                    className='w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-xl cursor-pointer active:scale-[0.97] transition-all text-sm'
+                  >
+                    Back to Menu
+                  </button>
                 </div>
               </>
+            ) : (
+              <div className='h-full flex flex-col'>
+                {state.lastAnswer?.isCorrect ? (
+                  <div className='flex-1 flex flex-col justify-center pt-0.5'>
+                    <p className='text-emerald-700 font-bold text-sm sm:text-base'>
+                      Correct!
+                    </p>
+                    <p className='text-emerald-600 text-xs sm:text-sm mt-0.5'>
+                      <strong>{state.lastAnswer.correct}</strong>
+                    </p>
+                  </div>
+                ) : (
+                  <div className='flex-1 flex flex-col justify-center pt-0.5'>
+                    <p className='text-red-700 font-bold text-sm sm:text-base'>
+                      Wrong!
+                    </p>
+                    <p className='text-red-600 text-[11px] sm:text-xs mt-0.5 break-words'>
+                      Your: <strong>{state.lastAnswer?.selected}</strong> •
+                      Correct: <strong>{state.lastAnswer?.correct}</strong>
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  onClick={onNext}
+                  className='w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-md cursor-pointer active:scale-[0.97] transition-all text-sm mt-auto'
+                >
+                  Next District →
+                </button>
+              </div>
             )}
           </div>
 

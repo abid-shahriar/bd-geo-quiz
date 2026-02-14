@@ -59,7 +59,6 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
   const suppressDistrictSelectionUntil = useRef(0);
   const touchStartPoint = useRef<{ x: number; y: number } | null>(null);
   const touchMoved = useRef(false);
-  const activeTouchDistrict = useRef<string | null>(null);
   const touchPanStarted = useRef(false);
 
   // Clamp pan so the map doesn't fly off screen
@@ -377,7 +376,6 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
         touchStartPoint.current = { x: touch.clientX, y: touch.clientY };
       }
       touchMoved.current = false;
-      activeTouchDistrict.current = district.name;
 
       e.preventDefault();
       setTouchedDistrict(district.name);
@@ -402,12 +400,9 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     [interactive]
   );
 
-  const handleTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
+  const handleTouchEndDistrict = useCallback(
+    (districtName: string, e: React.TouchEvent) => {
       if (!interactive || !onDistrictClick) return;
-
-      const districtName = activeTouchDistrict.current;
-      if (!districtName) return;
 
       const shouldSuppress =
         isTouchPanning ||
@@ -421,7 +416,6 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
         onDistrictClick(districtName);
       }
 
-      activeTouchDistrict.current = null;
       touchStartPoint.current = null;
       touchMoved.current = false;
       setTouchedDistrict(null);
@@ -430,7 +424,6 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
   );
 
   const handleTouchCancelDistrict = useCallback(() => {
-    activeTouchDistrict.current = null;
     touchStartPoint.current = null;
     touchMoved.current = false;
     setTouchedDistrict(null);
@@ -566,7 +559,6 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
         ref={svgRef}
         viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
         className='w-full h-full max-h-[80vh]'
-        onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchCancelDistrict}
         style={{
           touchAction: 'none'
@@ -596,6 +588,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
                 onClick={() => handleClick(district.name)}
                 onTouchStart={(e) => handleTouchStart(district, e)}
                 onTouchMove={handleTouchMoveDistrict}
+                onTouchEnd={(e) => handleTouchEndDistrict(district.name, e)}
               />
             ))}
 
