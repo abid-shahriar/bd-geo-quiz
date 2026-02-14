@@ -49,13 +49,13 @@ export function QuizScreen({
       {showEndConfirm && (
         <div className='fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
           <div className='bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center'>
-            <div className='text-4xl mb-3'>🏁</div>
             <h3 className='text-lg font-bold text-gray-800 mb-2'>
               End the quiz?
             </h3>
             <p className='text-gray-500 text-sm mb-5 leading-relaxed'>
-              You've answered {state.totalQuestions} of 64 questions. Score so
-              far:{' '}
+              You've answered {state.totalQuestions} of 64 questions.
+              <br />
+              Score so far:{' '}
               <strong>
                 {state.score}/{state.totalQuestions}
               </strong>
