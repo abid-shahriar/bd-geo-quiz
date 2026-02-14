@@ -37,6 +37,10 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
   const [touchedDistrict, setTouchedDistrict] = useState<string | null>(null);
+  const canHover =
+    typeof window === 'undefined' || !window.matchMedia
+      ? true
+      : window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const [tooltip, setTooltip] = useState<{
     x: number;
     y: number;
@@ -318,7 +322,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
 
   const handleMouseEnter = useCallback(
     (district: District, e: React.MouseEvent) => {
-      if (!interactive) return;
+      if (!interactive || !canHover) return;
       setHoveredDistrict(district.name);
       const elem = containerRef.current;
       if (elem) {
@@ -332,12 +336,12 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
         });
       }
     },
-    [interactive]
+    [interactive, canHover]
   );
 
   const handleMouseMoveDistrict = useCallback(
     (district: District, e: React.MouseEvent) => {
-      if (!interactive) return;
+      if (!interactive || !canHover) return;
       const elem = containerRef.current;
       if (elem) {
         const rect = elem.getBoundingClientRect();
@@ -350,13 +354,14 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
         });
       }
     },
-    [interactive]
+    [interactive, canHover]
   );
 
   const handleMouseLeave = useCallback(() => {
+    if (!canHover) return;
     setHoveredDistrict(null);
     setTooltip(null);
-  }, []);
+  }, [canHover]);
 
   const handleClick = useCallback(
     (districtName: string) => {
