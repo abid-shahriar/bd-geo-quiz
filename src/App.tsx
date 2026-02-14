@@ -213,13 +213,6 @@ function StudyScreen() {
     setShowMobileDivisions(false);
   };
 
-  const handleStudyDistrictClick = () => {
-    if (!showDivisionFilter) return;
-    setShowDivisionFilter(null);
-    setMapResetToken((token) => token + 1);
-    setShowMobileDivisions(false);
-  };
-
   return (
     <div className='flex-1 flex flex-col min-h-0'>
       <div className='flex-1 flex flex-col lg:flex-row gap-4 min-h-0'>
@@ -276,9 +269,9 @@ function StudyScreen() {
 
           <BangladeshMap
             key={`study-map-${showDivisionFilter ?? 'all'}-${mapResetToken}`}
-            onDistrictClick={handleStudyDistrictClick}
             showLabels
-            interactive
+            hideTooltip
+            interactive={false}
             highlightDivision={showDivisionFilter}
           />
         </div>

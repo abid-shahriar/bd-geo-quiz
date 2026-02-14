@@ -319,7 +319,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
 
   const handleMouseEnter = useCallback(
     (district: District, e: React.MouseEvent) => {
-      if (!interactive && !showLabels) return;
+      if (!interactive) return;
       setHoveredDistrict(district.name);
       const elem = containerRef.current;
       if (elem) {
@@ -333,12 +333,12 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
         });
       }
     },
-    [interactive, showLabels]
+    [interactive]
   );
 
   const handleMouseMoveDistrict = useCallback(
     (district: District, e: React.MouseEvent) => {
-      if (!interactive && !showLabels) return;
+      if (!interactive) return;
       const elem = containerRef.current;
       if (elem) {
         const rect = elem.getBoundingClientRect();
@@ -351,7 +351,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
         });
       }
     },
-    [interactive, showLabels]
+    [interactive]
   );
 
   const handleMouseLeave = useCallback(() => {
