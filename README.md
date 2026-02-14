@@ -1,73 +1,140 @@
-# React + TypeScript + Vite
+# 🇧🇩 GeoQuizBD — Bangladesh District Quiz
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive map-based quiz app to learn and test all **64 districts of Bangladesh**.
 
-Currently, two official plugins are available:
+Built with **React + TypeScript + Vite + Tailwind CSS** and optimized for both mobile and desktop map interactions (pinch zoom, drag pan, study mode labels, and quiz flow).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🌐 Live Demo
 
-## React Compiler
+**Vercel:** https://geoquizbd.vercel.app
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## ✨ Features
 
-## Expanding the ESLint configuration
+- 🗺️ Interactive Bangladesh district SVG map
+- 📖 Study mode with district labels
+- 🎯 Quiz mode with score tracking and progress bar
+- 🔍 Division highlighting/filtering
+- 🤏 Pinch-to-zoom + drag-to-pan on touch devices
+- 🖱️ Mouse wheel zoom + drag pan on desktop
+- ✅ Correct/wrong answer feedback with map highlights
+- 📊 End-of-quiz summary + quick stats
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🧱 Tech Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Framework:** React 19
+- **Language:** TypeScript
+- **Build tool:** Vite 7
+- **Styling:** Tailwind CSS 4 (`@tailwindcss/vite`)
+- **Linting:** ESLint 9 + TypeScript ESLint + React Hooks plugin
+- **Deployment:** Vercel
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 📁 Project Structure
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+bd-map-2/
+├─ public/
+├─ src/
+│  ├─ assets/
+│  ├─ data/
+│  │  └─ districts.ts                # Auto-generated district geometry + metadata
+│  ├─ features/
+│  │  └─ game/
+│  │     └─ screens/
+│  │        ├─ MenuScreen.tsx
+│  │        ├─ StudyScreen.tsx
+│  │        ├─ QuizScreen.tsx
+│  │        └─ index.ts
+│  ├─ App.tsx                        # App shell + mode orchestration
+│  ├─ BangladeshMap.tsx              # Reusable map component (zoom/pan/interactions)
+│  ├─ useGameState.ts                # Core quiz/study state machine
+│  ├─ main.tsx
+│  └─ index.css
+├─ bd_districts_temp.json            # Raw source geometry (large)
+├─ process-geojson.cjs               # One-off script to generate src/data/districts.ts
+├─ vite.config.ts
+├─ eslint.config.js
+├─ tsconfig*.json
+└─ package.json
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🚀 Getting Started
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js **20.19+** (recommended for Vite 7)
+- npm
+
+### Installation
+
+```bash
+npm install
 ```
+
+### Run development server
+
+```bash
+npm run dev
+```
+
+### Build for production
+
+```bash
+npm run build
+```
+
+### Preview production build
+
+```bash
+npm run preview
+```
+
+## 🧠 Architecture Notes
+
+The app currently uses a mode-driven single-page flow (`menu`, `study`, `quiz`, `result`) managed by `useGameState`.
+
+To keep the codebase scalable for future multi-page plans:
+
+- `App.tsx` now acts as a lightweight shell/orchestrator.
+- Feature UI is grouped under `src/features/game/screens`.
+- The map logic is isolated in `BangladeshMap.tsx`, making it reusable in upcoming pages (e.g., district info pages, additional quiz types).
+
+When routing is introduced later (e.g., React Router), these screens can be promoted to route-level pages with minimal rework.
+
+## 🗺️ Data Pipeline
+
+District map data is generated from raw geometry:
+
+- **Input:** `bd_districts_temp.json`
+- **Generator:** `process-geojson.cjs`
+- **Output:** `src/data/districts.ts`
+
+The generator projects coordinates, simplifies paths, computes centroids, and embeds division colors + Bengali names.
+
+## 📌 Current Modes
+
+- **Menu:** Start quiz or study mode
+- **Study:** Explore all districts with labels and division filter
+- **Quiz:** Identify requested district on map
+- **Result:** Instant answer feedback and final summary
+
+## 🛣️ Roadmap
+
+- [ ] Add route-based multi-page navigation
+- [ ] Add district detail pages (history, division, map facts)
+- [ ] Add multiple quiz variants (division quiz, timed mode, reverse quiz)
+- [ ] Add persistent stats/history (local storage or backend)
+- [ ] Add accessibility pass (keyboard map navigation + ARIA improvements)
+
+## 🤝 Contributing
+
+Contributions, ideas, and issue reports are welcome.
+
+If you open a PR, please:
+
+1. Keep behavior unchanged unless the change is intentional.
+2. Run lint/build locally.
+3. Keep UI responsive on mobile and desktop.
+
+## 📄 License
+
+This project is currently unlicensed. Add a `LICENSE` file if you want to define usage rights explicitly.
