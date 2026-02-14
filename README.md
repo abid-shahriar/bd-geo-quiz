@@ -1,4 +1,4 @@
-# 🇧🇩 GeoQuizBD — Bangladesh District Quiz
+# GeoQuizBD — Bangladesh District Quiz
 
 An interactive map-based quiz app to learn and test all **64 districts of Bangladesh**.
 
