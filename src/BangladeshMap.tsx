@@ -35,6 +35,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const contentGroupRef = useRef<SVGGElement>(null);
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
   const [touchedDistrict, setTouchedDistrict] = useState<string | null>(null);
   const canHover =
@@ -55,6 +56,12 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
   const [isPanning, setIsPanning] = useState(false);
   const [isTouchPanning, setIsTouchPanning] = useState(false);
   const [viewBoxScale, setViewBoxScale] = useState(1);
+  const [contentBounds, setContentBounds] = useState({
+    x: 0,
+    y: 0,
+    width: MAP_WIDTH,
+    height: MAP_HEIGHT
+  });
   const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const lastPinchDist = useRef<number | null>(null);
   const lastPinchCenter = useRef<{ x: number; y: number } | null>(null);
@@ -67,9 +74,10 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
 
   // Clamp pan so the map doesn't fly off screen
   const clampPan = useCallback((px: number, py: number, z: number) => {
-    const container = containerRef.current;
-    if (!container) return { x: px, y: py };
-    const rect = container.getBoundingClientRect();
+    const rect =
+      svgRef.current?.getBoundingClientRect() ??
+      containerRef.current?.getBoundingClientRect();
+    if (!rect) return { x: px, y: py };
     const scaledW = rect.width * z;
     const scaledH = rect.height * z;
     const maxPanX = Math.max(0, (scaledW - rect.width) / 2);
@@ -296,6 +304,46 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     };
   }, [zoom, handleZoom, clampPan]);
 
+  // Measure the actual district content area to avoid extra top/bottom empty space.
+  useEffect(() => {
+    const svg = svgRef.current;
+    const content = contentGroupRef.current;
+    if (!svg || !content) return;
+
+    const updateBounds = () => {
+      const box = content.getBBox();
+      if (!box.width || !box.height) return;
+
+      const pad = 10;
+      const next = {
+        x: Math.max(0, box.x - pad),
+        y: Math.max(0, box.y - pad),
+        width: Math.min(MAP_WIDTH, box.width + pad * 2),
+        height: Math.min(MAP_HEIGHT, box.height + pad * 2)
+      };
+
+      setContentBounds((prev) => {
+        const same =
+          Math.abs(prev.x - next.x) < 0.5 &&
+          Math.abs(prev.y - next.y) < 0.5 &&
+          Math.abs(prev.width - next.width) < 0.5 &&
+          Math.abs(prev.height - next.height) < 0.5;
+        return same ? prev : next;
+      });
+    };
+
+    updateBounds();
+
+    const observer = new ResizeObserver(updateBounds);
+    observer.observe(svg);
+    window.addEventListener('resize', updateBounds);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateBounds);
+    };
+  }, []);
+
   // Track rendered SVG scale to convert pixel pan to SVG units
   useEffect(() => {
     const svg = svgRef.current;
@@ -304,7 +352,10 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     const updateScale = () => {
       const rect = svg.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
-      const scale = Math.min(rect.width / MAP_WIDTH, rect.height / MAP_HEIGHT);
+      const scale = Math.min(
+        rect.width / contentBounds.width,
+        rect.height / contentBounds.height
+      );
       setViewBoxScale(scale || 1);
     };
 
@@ -318,7 +369,7 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
       observer.disconnect();
       window.removeEventListener('resize', updateScale);
     };
-  }, []);
+  }, [contentBounds.width, contentBounds.height]);
 
   const handleMouseEnter = useCallback(
     (district: District, e: React.MouseEvent) => {
@@ -503,6 +554,8 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
 
   const panXViewBox = pan.x / viewBoxScale;
   const panYViewBox = pan.y / viewBoxScale;
+  const viewBoxCenterX = contentBounds.x + contentBounds.width / 2;
+  const viewBoxCenterY = contentBounds.y + contentBounds.height / 2;
 
   useEffect(() => {
     if (!showLabels) return;
@@ -526,15 +579,15 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
 
     const spanX = Math.max(30, maxX - minX);
     const spanY = Math.max(30, maxY - minY);
-    const fitZoomX = MAP_WIDTH / (spanX + 80);
-    const fitZoomY = MAP_HEIGHT / (spanY + 120);
+    const fitZoomX = contentBounds.width / (spanX + 80);
+    const fitZoomY = contentBounds.height / (spanY + 120);
     const targetZoom = Math.max(
       1.8,
       Math.min(3.2, Math.min(MAX_ZOOM, fitZoomX, fitZoomY))
     );
 
-    const panSvgX = -targetZoom * (centerX - MAP_WIDTH / 2);
-    const panSvgY = -targetZoom * (centerY - MAP_HEIGHT / 2);
+    const panSvgX = -targetZoom * (centerX - viewBoxCenterX);
+    const panSvgY = -targetZoom * (centerY - viewBoxCenterY);
     const panPxX = panSvgX * viewBoxScale;
     const panPxY = panSvgY * viewBoxScale;
 
@@ -544,12 +597,21 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     });
 
     return () => window.cancelAnimationFrame(rafId);
-  }, [showLabels, highlightDivision, viewBoxScale, clampPan]);
+  }, [
+    showLabels,
+    highlightDivision,
+    viewBoxScale,
+    clampPan,
+    contentBounds.width,
+    contentBounds.height,
+    viewBoxCenterX,
+    viewBoxCenterY
+  ]);
 
   return (
     <div
       ref={containerRef}
-      className='relative w-full h-full flex items-center justify-center overflow-hidden'
+      className='relative w-full h-full overflow-hidden'
       onMouseDown={handleMouseDown}
       style={{
         cursor:
@@ -562,8 +624,8 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     >
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-        className='w-full h-full max-h-[80vh]'
+        viewBox={`${contentBounds.x} ${contentBounds.y} ${contentBounds.width} ${contentBounds.height}`}
+        className='block w-full h-full'
         onTouchCancel={handleTouchCancelDistrict}
         style={{
           touchAction: 'none'
@@ -571,31 +633,33 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
       >
         <g transform={`translate(${panXViewBox} ${panYViewBox})`}>
           <g
-            transform={`translate(${MAP_WIDTH / 2} ${MAP_HEIGHT / 2}) scale(${zoom}) translate(${-MAP_WIDTH / 2} ${-MAP_HEIGHT / 2})`}
+            transform={`translate(${viewBoxCenterX} ${viewBoxCenterY}) scale(${zoom}) translate(${-viewBoxCenterX} ${-viewBoxCenterY})`}
           >
             {/* District paths */}
-            {districts.map((district) => (
-              <path
-                key={district.name}
-                d={district.path}
-                fill={getDistrictFill(district)}
-                stroke={getDistrictStroke(district)}
-                strokeWidth={getDistrictStrokeWidth(district)}
-                strokeLinejoin='round'
-                className={interactive ? 'cursor-pointer' : ''}
-                style={{
-                  transition:
-                    'fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease'
-                }}
-                onMouseEnter={(e) => handleMouseEnter(district, e)}
-                onMouseMove={(e) => handleMouseMoveDistrict(district, e)}
-                onMouseLeave={handleMouseLeave}
-                onClick={() => handleClick(district.name)}
-                onTouchStart={(e) => handleTouchStart(district, e)}
-                onTouchMove={handleTouchMoveDistrict}
-                onTouchEnd={(e) => handleTouchEndDistrict(district.name, e)}
-              />
-            ))}
+            <g ref={contentGroupRef}>
+              {districts.map((district) => (
+                <path
+                  key={district.name}
+                  d={district.path}
+                  fill={getDistrictFill(district)}
+                  stroke={getDistrictStroke(district)}
+                  strokeWidth={getDistrictStrokeWidth(district)}
+                  strokeLinejoin='round'
+                  className={interactive ? 'cursor-pointer' : ''}
+                  style={{
+                    transition:
+                      'fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => handleMouseEnter(district, e)}
+                  onMouseMove={(e) => handleMouseMoveDistrict(district, e)}
+                  onMouseLeave={handleMouseLeave}
+                  onClick={() => handleClick(district.name)}
+                  onTouchStart={(e) => handleTouchStart(district, e)}
+                  onTouchMove={handleTouchMoveDistrict}
+                  onTouchEnd={(e) => handleTouchEndDistrict(district.name, e)}
+                />
+              ))}
+            </g>
 
             {/* Labels in study mode */}
             {showLabels &&

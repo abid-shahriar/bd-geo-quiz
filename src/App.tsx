@@ -24,7 +24,7 @@ function App() {
   };
 
   return (
-    <div className='min-h-dvh bg-gradient-to-br from-emerald-50 via-teal-50 to-sky-50 flex flex-col items-center'>
+    <div className='h-dvh overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-sky-50 flex flex-col items-center'>
       {/* Header */}
       <header className='w-full bg-white/80 backdrop-blur-sm shadow-sm border-b border-emerald-100 sticky top-0 z-40'>
         <div className='max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between'>
@@ -88,7 +88,7 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className='flex-1 flex flex-col max-w-6xl w-full px-4 sm:px-6 py-4 min-h-0'>
+      <main className='flex-1 flex flex-col max-w-6xl w-full px-4 sm:px-6 py-3 sm:py-4 min-h-0 overflow-hidden'>
         {state.mode === 'menu' && (
           <MenuScreen
             onStartQuiz={startQuiz}
@@ -224,7 +224,7 @@ function StudyScreen() {
     <div className='flex-1 flex flex-col min-h-0'>
       <div className='flex-1 flex flex-col lg:flex-row gap-4 min-h-0'>
         {/* Map */}
-        <div className='relative flex-1 min-h-0 order-1 bg-white/50 rounded-2xl border border-gray-100 p-2 sm:p-3'>
+        <div className='relative flex-1 min-h-0 order-1 bg-white/50 rounded-2xl border border-gray-100 overflow-hidden'>
           {/* Mobile floating divisions */}
           <div className='lg:hidden absolute top-3 left-3 z-20'>
             <button
@@ -419,7 +419,7 @@ function QuizScreen({
 
       <div className='flex-1 flex flex-col lg:flex-row gap-4 min-h-0'>
         {/* Map */}
-        <div className='flex-1 min-h-0 order-2 lg:order-1 bg-white/50 rounded-2xl border border-gray-100 p-0'>
+        <div className='flex-1 min-h-0 overflow-hidden order-2 lg:order-1 bg-white/50 rounded-2xl border border-gray-100 p-0'>
           <BangladeshMap
             onDistrictClick={onDistrictClick}
             interactive={state.mode === 'quiz'}
