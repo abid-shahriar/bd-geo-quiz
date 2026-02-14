@@ -23,23 +23,28 @@ function App() {
     goToMenu();
   };
 
-  const handleGoToMenu = () => {
-    setShowEndConfirm(false);
-    goToMenu();
-  };
-
   return (
     <div className='min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-sky-50 flex flex-col items-center'>
       {/* Header */}
       <header className='w-full bg-white/80 backdrop-blur-sm shadow-sm border-b border-emerald-100 sticky top-0 z-40'>
         <div className='max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between'>
-          <button
-            onClick={goToMenu}
-            className='text-lg md:text-xl font-bold text-emerald-800 hover:text-emerald-600 transition-colors cursor-pointer flex items-center gap-2'
-          >
-            <span className='hidden sm:inline'>BD District Quiz</span>
-            <span className='sm:hidden'>BD Quiz</span>
-          </button>
+          <div className='flex items-center gap-2'>
+            {state.mode === 'study' && (
+              <button
+                onClick={goToMenu}
+                className='bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 hover:text-emerald-700 font-semibold text-sm px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer transition-all shadow-sm'
+              >
+                ← Back
+              </button>
+            )}
+            <button
+              onClick={goToMenu}
+              className='text-lg md:text-xl font-bold text-emerald-800 hover:text-emerald-600 transition-colors cursor-pointer flex items-center gap-2'
+            >
+              <span className='hidden sm:inline'>BD District Quiz</span>
+              <span className='sm:hidden'>BD Quiz</span>
+            </button>
+          </div>
 
           {state.mode === 'study' && (
             <span className='bg-sky-100 text-sky-700 px-3 py-1 rounded-full text-sm font-medium'>
@@ -49,6 +54,12 @@ function App() {
 
           {(state.mode === 'quiz' || state.mode === 'result') && (
             <div className='flex items-center gap-2 text-sm'>
+              <button
+                onClick={() => setShowEndConfirm(true)}
+                className='bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-600 hover:text-red-600 font-semibold text-xs sm:text-sm px-3 py-1.5 rounded-lg cursor-pointer transition-all shadow-sm flex-shrink-0'
+              >
+                ✕ End
+              </button>
               <div className='bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-semibold'>
                 ✓ {state.score}/{state.totalQuestions}
               </div>
@@ -58,6 +69,22 @@ function App() {
             </div>
           )}
         </div>
+
+        {state.mode === 'quiz' && (
+          <div className='max-w-6xl mx-auto px-4 sm:px-6 pb-2'>
+            <div className='flex items-center gap-3'>
+              <div className='flex-1 bg-gray-200 rounded-full h-2 overflow-hidden'>
+                <div
+                  className='bg-gradient-to-r from-emerald-400 to-emerald-600 h-2 rounded-full transition-all duration-500 ease-out'
+                  style={{ width: `${progress.percentage}%` }}
+                />
+              </div>
+              <span className='text-xs text-gray-500 font-medium flex-shrink-0'>
+                {progress.current}/64
+              </span>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
@@ -69,7 +96,7 @@ function App() {
             lastScore={state.totalQuestions > 0 ? state : null}
           />
         )}
-        {state.mode === 'study' && <StudyScreen onBack={handleGoToMenu} />}
+        {state.mode === 'study' && <StudyScreen />}
         {(state.mode === 'quiz' || state.mode === 'result') && (
           <QuizScreen
             state={state}
@@ -77,7 +104,6 @@ function App() {
             onNext={nextQuestion}
             onBackToMenu={goToMenu}
             isGameOver={isGameOver}
-            progress={progress}
             showEndConfirm={showEndConfirm}
             onEndGame={handleEndGame}
             onRequestEnd={() => setShowEndConfirm(true)}
@@ -169,46 +195,97 @@ function MenuScreen({
 }
 
 // ============ Study Screen ============
-function StudyScreen({ onBack }: { onBack: () => void }) {
+function StudyScreen() {
   const [showDivisionFilter, setShowDivisionFilter] = useState<string | null>(
     null
   );
+  const [mapResetToken, setMapResetToken] = useState(0);
+  const [showMobileDivisions, setShowMobileDivisions] = useState(false);
+
+  const handleDivisionSelect = (division: string) => {
+    setShowDivisionFilter((prev) => {
+      const next = prev === division ? null : division;
+      if (next === null) {
+        setMapResetToken((token) => token + 1);
+      }
+      return next;
+    });
+    setShowMobileDivisions(false);
+  };
 
   return (
     <div className='flex-1 flex flex-col min-h-0'>
-      <div className='flex items-center justify-between mb-3'>
-        <button
-          onClick={onBack}
-          className='bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 hover:text-emerald-700 font-semibold text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all shadow-sm'
-        >
-          ← Back
-        </button>
-        <p className='text-gray-400 text-xs hidden sm:block'>
-          Scroll to zoom • Hover to explore
-        </p>
-      </div>
-
       <div className='flex-1 flex flex-col lg:flex-row gap-4 min-h-0'>
         {/* Map */}
-        <div className='flex-1 min-h-0 bg-white/50 rounded-2xl border border-gray-100 p-2 sm:p-3'>
+        <div className='relative flex-1 min-h-0 order-1 bg-white/50 rounded-2xl border border-gray-100 p-2 sm:p-3'>
+          {/* Mobile floating divisions */}
+          <div className='lg:hidden absolute top-3 left-3 z-20'>
+            <button
+              onClick={() => setShowMobileDivisions((prev) => !prev)}
+              className='bg-white/95 backdrop-blur-sm border border-gray-200 text-gray-700 font-semibold text-xs px-3 py-2 rounded-xl shadow-md flex items-center gap-1.5'
+            >
+              🧭 Divisions {showMobileDivisions ? '▲' : '▼'}
+            </button>
+
+            {showMobileDivisions && (
+              <div className='mt-2 w-[min(82vw,18rem)] max-h-[45vh] overflow-y-auto bg-white/95 backdrop-blur-sm rounded-xl border border-gray-200 shadow-lg p-2.5'>
+                <div className='grid grid-cols-2 gap-2'>
+                  {Object.entries(DIVISION_COLORS).map(([division, color]) => (
+                    <button
+                      key={`mobile-${division}`}
+                      className={`flex items-center gap-2 text-xs px-2.5 py-2 rounded-lg transition-all cursor-pointer text-left min-w-0 ${
+                        showDivisionFilter === division
+                          ? 'font-semibold text-gray-900 shadow-sm outline outline-2'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                      style={
+                        showDivisionFilter === division
+                          ? {
+                              backgroundColor: color + '15',
+                              outlineColor: color + '80'
+                            }
+                          : {}
+                      }
+                      onClick={() => handleDivisionSelect(division)}
+                    >
+                      <div
+                        className='w-3 h-3 rounded-full flex-shrink-0 ring-1 ring-black/10'
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className='truncate'>{division}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Zoom hint at top of map */}
+          <div className='absolute top-3 right-3 z-10 pointer-events-none'>
+            <p className='bg-black/45 text-white text-[10px] sm:text-xs px-2.5 py-1 rounded-full backdrop-blur-sm whitespace-nowrap'>
+              Pinch to zoom • Drag to pan
+            </p>
+          </div>
+
           <BangladeshMap
+            key={`study-map-${showDivisionFilter ?? 'all'}-${mapResetToken}`}
             showLabels
             interactive={false}
             highlightDivision={showDivisionFilter}
           />
         </div>
 
-        {/* Division sidebar */}
-        <div className='lg:w-52 flex-shrink-0'>
+        {/* Desktop division sidebar */}
+        <div className='hidden lg:block lg:w-52 flex-shrink-0 order-2'>
           <div className='bg-white rounded-2xl shadow-sm p-4 border border-gray-100'>
             <h3 className='font-semibold text-gray-600 text-xs uppercase tracking-wide mb-3'>
               Divisions
             </h3>
-            <div className='grid grid-cols-4 lg:grid-cols-1 gap-1.5'>
+            <div className='grid grid-cols-1 gap-2'>
               {Object.entries(DIVISION_COLORS).map(([division, color]) => (
                 <button
-                  key={division}
-                  className={`flex items-center gap-2.5 text-sm px-3 py-2 rounded-xl transition-all cursor-pointer text-left ${
+                  key={`desktop-${division}`}
+                  className={`flex items-center gap-2 text-sm px-3 py-2 rounded-xl transition-all cursor-pointer text-left min-w-0 ${
                     showDivisionFilter === division
                       ? 'font-semibold text-gray-900 shadow-sm outline outline-2'
                       : 'text-gray-600 hover:bg-gray-50'
@@ -221,18 +298,13 @@ function StudyScreen({ onBack }: { onBack: () => void }) {
                         }
                       : {}
                   }
-                  onClick={() =>
-                    setShowDivisionFilter((prev) =>
-                      prev === division ? null : division
-                    )
-                  }
+                  onClick={() => handleDivisionSelect(division)}
                 >
                   <div
                     className='w-3.5 h-3.5 rounded-full flex-shrink-0 ring-1 ring-black/10'
                     style={{ backgroundColor: color }}
                   />
-                  <span className='hidden lg:inline'>{division}</span>
-                  <span className='lg:hidden text-xs'>{division}</span>
+                  <span className='truncate'>{division}</span>
                 </button>
               ))}
             </div>
@@ -250,7 +322,6 @@ function QuizScreen({
   onNext,
   onBackToMenu,
   isGameOver,
-  progress,
   showEndConfirm,
   onEndGame,
   onRequestEnd,
@@ -261,7 +332,6 @@ function QuizScreen({
   onNext: () => void;
   onBackToMenu: () => void;
   isGameOver: boolean;
-  progress: { current: number; total: number; percentage: number };
   showEndConfirm: boolean;
   onEndGame: () => void;
   onRequestEnd: () => void;
@@ -289,25 +359,6 @@ function QuizScreen({
 
   return (
     <div className='flex-1 flex flex-col min-h-0'>
-      {/* Top bar: progress + end game */}
-      <div className='flex items-center gap-3 mb-3'>
-        <button
-          onClick={onRequestEnd}
-          className='bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-600 hover:text-red-600 font-semibold text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all shadow-sm flex-shrink-0'
-        >
-          ✕ End
-        </button>
-        <div className='flex-1 bg-gray-200 rounded-full h-2 overflow-hidden'>
-          <div
-            className='bg-gradient-to-r from-emerald-400 to-emerald-600 h-2 rounded-full transition-all duration-500 ease-out'
-            style={{ width: `${progress.percentage}%` }}
-          />
-        </div>
-        <span className='text-xs text-gray-400 font-medium flex-shrink-0'>
-          {progress.current}/64
-        </span>
-      </div>
-
       {/* End game confirmation modal */}
       {showEndConfirm && (
         <div className='fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4'>

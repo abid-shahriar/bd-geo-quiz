@@ -45,9 +45,12 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
+  const [isTouchPanning, setIsTouchPanning] = useState(false);
+  const [viewBoxScale, setViewBoxScale] = useState(1);
   const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const lastPinchDist = useRef<number | null>(null);
   const lastPinchCenter = useRef<{ x: number; y: number } | null>(null);
+  const lastTouchPoint = useRef<{ x: number; y: number } | null>(null);
 
   // Clamp pan so the map doesn't fly off screen
   const clampPan = useCallback((px: number, py: number, z: number) => {
@@ -155,6 +158,8 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     const onTouchMove = (e: TouchEvent) => {
       if (e.touches.length === 2) {
         e.preventDefault();
+        setIsTouchPanning(false);
+        lastTouchPoint.current = null;
         const t1 = e.touches[0],
           t2 = e.touches[1];
         const dist = Math.hypot(
@@ -169,7 +174,10 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
           lastPinchDist.current !== null &&
           lastPinchCenter.current !== null
         ) {
-          const delta = (dist - lastPinchDist.current) * 0.01;
+          const delta = Math.max(
+            -0.35,
+            Math.min(0.35, (dist - lastPinchDist.current) * 0.01)
+          );
           handleZoom(delta, cx, cy);
         }
         lastPinchDist.current = dist;
@@ -177,52 +185,95 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
       } else if (e.touches.length === 1 && zoom > 1) {
         e.preventDefault();
         const t = e.touches[0];
-        if (panStart.current.x !== 0 || panStart.current.y !== 0) {
-          const dx = t.clientX - panStart.current.x;
-          const dy = t.clientY - panStart.current.y;
-          setPan(
-            clampPan(
-              panStart.current.panX + dx,
-              panStart.current.panY + dy,
-              zoom
-            )
-          );
+        setIsTouchPanning(true);
+
+        if (lastTouchPoint.current) {
+          const dx = t.clientX - lastTouchPoint.current.x;
+          const dy = t.clientY - lastTouchPoint.current.y;
+          setPan((prevPan) => clampPan(prevPan.x + dx, prevPan.y + dy, zoom));
         }
-        panStart.current = {
-          x: t.clientX,
-          y: t.clientY,
-          panX: pan.x,
-          panY: pan.y
-        };
+
+        lastTouchPoint.current = { x: t.clientX, y: t.clientY };
       }
     };
 
     const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        const t1 = e.touches[0],
+          t2 = e.touches[1];
+        lastPinchDist.current = Math.hypot(
+          t2.clientX - t1.clientX,
+          t2.clientY - t1.clientY
+        );
+      }
+
       if (e.touches.length === 1 && zoom > 1) {
         const t = e.touches[0];
-        panStart.current = {
-          x: t.clientX,
-          y: t.clientY,
-          panX: pan.x,
-          panY: pan.y
-        };
+        lastTouchPoint.current = { x: t.clientX, y: t.clientY };
+        setIsTouchPanning(true);
       }
     };
 
-    const onTouchEnd = () => {
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        lastPinchDist.current = null;
+        lastPinchCenter.current = null;
+      }
+
+      if (e.touches.length === 1 && zoom > 1) {
+        const t = e.touches[0];
+        lastTouchPoint.current = { x: t.clientX, y: t.clientY };
+        setIsTouchPanning(true);
+      } else {
+        lastTouchPoint.current = null;
+        setIsTouchPanning(false);
+      }
+    };
+
+    const onTouchCancel = () => {
       lastPinchDist.current = null;
       lastPinchCenter.current = null;
+      lastTouchPoint.current = null;
+      setIsTouchPanning(false);
     };
 
     container.addEventListener('touchmove', onTouchMove, { passive: false });
     container.addEventListener('touchstart', onTouchStart, { passive: true });
     container.addEventListener('touchend', onTouchEnd, { passive: true });
+    container.addEventListener('touchcancel', onTouchCancel, {
+      passive: true
+    });
     return () => {
       container.removeEventListener('touchmove', onTouchMove);
       container.removeEventListener('touchstart', onTouchStart);
       container.removeEventListener('touchend', onTouchEnd);
+      container.removeEventListener('touchcancel', onTouchCancel);
     };
-  }, [zoom, pan, handleZoom, clampPan]);
+  }, [zoom, handleZoom, clampPan]);
+
+  // Track rendered SVG scale to convert pixel pan to SVG units
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const updateScale = () => {
+      const rect = svg.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const scale = Math.min(rect.width / MAP_WIDTH, rect.height / MAP_HEIGHT);
+      setViewBoxScale(scale || 1);
+    };
+
+    updateScale();
+
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(svg);
+
+    window.addEventListener('resize', updateScale);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateScale);
+    };
+  }, []);
 
   const handleMouseEnter = useCallback(
     (district: District, e: React.MouseEvent) => {
@@ -366,13 +417,63 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
     [correctDistrict, wrongDistrict, hoveredDistrict, touchedDistrict]
   );
 
+  const panXViewBox = pan.x / viewBoxScale;
+  const panYViewBox = pan.y / viewBoxScale;
+
+  useEffect(() => {
+    if (!showLabels) return;
+    if (!highlightDivision) return;
+
+    if (!viewBoxScale) return;
+
+    const divisionDistricts = districts.filter(
+      (d) => d.division === highlightDivision
+    );
+
+    if (divisionDistricts.length === 0) return;
+
+    const minX = Math.min(...divisionDistricts.map((d) => d.labelX));
+    const maxX = Math.max(...divisionDistricts.map((d) => d.labelX));
+    const minY = Math.min(...divisionDistricts.map((d) => d.labelY));
+    const maxY = Math.max(...divisionDistricts.map((d) => d.labelY));
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const spanX = Math.max(30, maxX - minX);
+    const spanY = Math.max(30, maxY - minY);
+    const fitZoomX = MAP_WIDTH / (spanX + 80);
+    const fitZoomY = MAP_HEIGHT / (spanY + 120);
+    const targetZoom = Math.max(
+      1.8,
+      Math.min(3.2, Math.min(MAX_ZOOM, fitZoomX, fitZoomY))
+    );
+
+    const panSvgX = -targetZoom * (centerX - MAP_WIDTH / 2);
+    const panSvgY = -targetZoom * (centerY - MAP_HEIGHT / 2);
+    const panPxX = panSvgX * viewBoxScale;
+    const panPxY = panSvgY * viewBoxScale;
+
+    const rafId = window.requestAnimationFrame(() => {
+      setZoom(targetZoom);
+      setPan(clampPan(panPxX, panPxY, targetZoom));
+    });
+
+    return () => window.cancelAnimationFrame(rafId);
+  }, [showLabels, highlightDivision, viewBoxScale, clampPan]);
+
   return (
     <div
       ref={containerRef}
       className='relative w-full h-full flex items-center justify-center overflow-hidden'
       onMouseDown={handleMouseDown}
       style={{
-        cursor: zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'default'
+        cursor:
+          zoom > 1
+            ? isPanning || isTouchPanning
+              ? 'grabbing'
+              : 'grab'
+            : 'default'
       }}
     >
       <svg
@@ -380,93 +481,101 @@ export const BangladeshMap: React.FC<BangladeshMapProps> = ({
         viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
         className='w-full h-full max-h-[80vh]'
         style={{
-          touchAction: 'none',
-          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-          transition: isPanning ? 'none' : 'transform 0.15s ease-out'
+          touchAction: 'none'
         }}
       >
-        {/* District paths */}
-        {districts.map((district) => (
-          <path
-            key={district.name}
-            d={district.path}
-            fill={getDistrictFill(district)}
-            stroke={getDistrictStroke(district)}
-            strokeWidth={getDistrictStrokeWidth(district)}
-            strokeLinejoin='round'
-            className={interactive ? 'cursor-pointer' : ''}
-            style={{
-              transition:
-                'fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease'
-            }}
-            onMouseEnter={(e) => handleMouseEnter(district, e)}
-            onMouseMove={(e) => handleMouseMoveDistrict(district, e)}
-            onMouseLeave={handleMouseLeave}
-            onClick={() => handleClick(district.name)}
-            onTouchStart={(e) => handleTouchStart(district, e)}
-            onTouchEnd={(e) => handleTouchEnd(district, e)}
-          />
-        ))}
-
-        {/* Labels in study mode */}
-        {showLabels &&
-          districts.map((district) => (
-            <g key={`label-${district.name}`}>
-              <text
-                x={district.labelX}
-                y={district.labelY}
-                textAnchor='middle'
-                dominantBaseline='central'
-                fill='white'
-                fontSize={5}
-                fontWeight='700'
-                strokeWidth={2.5}
-                stroke='white'
-                paintOrder='stroke'
-                className='pointer-events-none select-none'
-              >
-                {district.name}
-              </text>
-              <text
-                x={district.labelX}
-                y={district.labelY}
-                textAnchor='middle'
-                dominantBaseline='central'
-                fill='#1e293b'
-                fontSize={5}
-                fontWeight='700'
-                className='pointer-events-none select-none'
-              >
-                {district.name}
-              </text>
-            </g>
-          ))}
-
-        {/* Also show correct district label in result mode */}
-        {correctDistrict &&
-          !showLabels &&
-          districts
-            .filter(
-              (d) => d.name === correctDistrict || d.name === wrongDistrict
-            )
-            .map((district) => (
-              <text
-                key={`result-label-${district.name}`}
-                x={district.labelX}
-                y={district.labelY}
-                textAnchor='middle'
-                dominantBaseline='central'
-                fill={district.name === correctDistrict ? '#16a34a' : '#dc2626'}
-                fontSize={7}
-                fontWeight='700'
-                className='pointer-events-none select-none'
+        <g transform={`translate(${panXViewBox} ${panYViewBox})`}>
+          <g
+            transform={`translate(${MAP_WIDTH / 2} ${MAP_HEIGHT / 2}) scale(${zoom}) translate(${-MAP_WIDTH / 2} ${-MAP_HEIGHT / 2})`}
+          >
+            {/* District paths */}
+            {districts.map((district) => (
+              <path
+                key={district.name}
+                d={district.path}
+                fill={getDistrictFill(district)}
+                stroke={getDistrictStroke(district)}
+                strokeWidth={getDistrictStrokeWidth(district)}
+                strokeLinejoin='round'
+                className={interactive ? 'cursor-pointer' : ''}
                 style={{
-                  textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white'
+                  transition:
+                    'fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease'
                 }}
-              >
-                {district.name}
-              </text>
+                onMouseEnter={(e) => handleMouseEnter(district, e)}
+                onMouseMove={(e) => handleMouseMoveDistrict(district, e)}
+                onMouseLeave={handleMouseLeave}
+                onClick={() => handleClick(district.name)}
+                onTouchStart={(e) => handleTouchStart(district, e)}
+                onTouchEnd={(e) => handleTouchEnd(district, e)}
+              />
             ))}
+
+            {/* Labels in study mode */}
+            {showLabels &&
+              districts.map((district) => (
+                <g key={`label-${district.name}`}>
+                  <text
+                    x={district.labelX}
+                    y={district.labelY}
+                    textAnchor='middle'
+                    dominantBaseline='central'
+                    fill='white'
+                    fontSize={5}
+                    fontWeight='700'
+                    strokeWidth={2.5}
+                    stroke='white'
+                    paintOrder='stroke'
+                    className='pointer-events-none select-none'
+                    style={{ textRendering: 'geometricPrecision' }}
+                  >
+                    {district.name}
+                  </text>
+                  <text
+                    x={district.labelX}
+                    y={district.labelY}
+                    textAnchor='middle'
+                    dominantBaseline='central'
+                    fill='#1e293b'
+                    fontSize={5}
+                    fontWeight='700'
+                    className='pointer-events-none select-none'
+                    style={{ textRendering: 'geometricPrecision' }}
+                  >
+                    {district.name}
+                  </text>
+                </g>
+              ))}
+
+            {/* Also show correct district label in result mode */}
+            {correctDistrict &&
+              !showLabels &&
+              districts
+                .filter(
+                  (d) => d.name === correctDistrict || d.name === wrongDistrict
+                )
+                .map((district) => (
+                  <text
+                    key={`result-label-${district.name}`}
+                    x={district.labelX}
+                    y={district.labelY}
+                    textAnchor='middle'
+                    dominantBaseline='central'
+                    fill={
+                      district.name === correctDistrict ? '#16a34a' : '#dc2626'
+                    }
+                    fontSize={7}
+                    fontWeight='700'
+                    className='pointer-events-none select-none'
+                    style={{
+                      textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white'
+                    }}
+                  >
+                    {district.name}
+                  </text>
+                ))}
+          </g>
+        </g>
       </svg>
 
       {/* Zoom controls */}
